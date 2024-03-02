@@ -1,10 +1,13 @@
 {:paths ["src" "resources"]
- :deps {org.clojure/clojure {:mvn/version "1.11.1"}}
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        babashka/process    {:mvn/version "0.5.22"}
+        babashka/fs         {:mvn/version "0.5.20"}}
  :aliases
- {:run-m {:main-opts ["-m" "kurtharriger.clj-mergetool"]}
-  :run-x {:ns-default kurtharriger.clj-mergetool
-          :exec-fn greet
-          :exec-args {:name "Clojure"}}
+ {
+;;   :run-m {:main-opts ["-m" "kurtharriger.clj-mergetool"]}
+;;   :run-x {:ns-default kurtharriger.clj-mergetool
+;;           :exec-fn greet
+;;           :exec-args {:name "Clojure"}}
   :build {:deps {io.github.clojure/tools.build {:mvn/version "0.9.4"}}
           :ns-default build}
   :test {:extra-paths ["test"]
