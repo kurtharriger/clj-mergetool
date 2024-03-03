@@ -3,23 +3,22 @@
             [babashka.fs :as fs]
             [babashka.process :refer [process shell sh]]))
 
-(defn git [{:keys [dir] :as repo} & args]
+(defn git [{:keys [dir print?] :as repo} & args]
   {:pre [(string? dir)]}
-
-  (apply println args)
- (println "--------------------")
+  (when print? (apply println args))
   (let [r (apply sh {:dir dir} args)]
-    (println (:out r))
+    (when print? (println (:out r)))
     (when (pos? (:exit r))
-      (println (:err r))
+      (when print? (println (:err r)))
       (throw (ex-info "git command failed" r)))
-    r)
-  (println "===================="))
+    r))
 
-(defn init-repo []
+(defn init-repo [& {:keys [print? delete] :as opts :or {delete true}}]
   (let [dir (str (fs/create-temp-dir {:prefix "clj-mergetool-"}))
-        repo {:dir dir}]
-    (println "cd" dir)
+        repo {:dir dir
+              :print? print?
+              :delete delete}]
+    (when print? (println "cd" dir))
     (git repo "git init")
     repo))
 
@@ -39,57 +38,54 @@
 (defn merge! [{:keys [dir] :as repo} branch]
   (git repo "git merge" branch))
 
-(defn delete! [{:keys [dir] :as repo}]
-  (when dir
-    #_(fs/delete-tree dir)))
+(defn delete! [{:keys [dir delete] :as repo}]
+  (when (and dir delete)
+    (fs/delete-tree dir)))
 
-(defn print-content [{:keys [dir] :as repo}]
-  (println (slurp (fs/file dir "example.clj"))))
+(defn read-content [{:keys [dir] :as repo}]
+  (slurp (fs/file dir "example.clj")))
+
+(defn prepare-merge! [repo base left right]
+  (-> (doto repo
+        (write! base)
+        (commit! "base")
+        (branch! "left")
+        (write! left)
+        (commit! "left")
+        (checkout! "main")
+        (branch! "right")
+        (write! right)
+        (commit! "right")
+        (checkout! "main")
+        (git "git diff left")
+        (git "git diff right")
+        (merge! "left"))))
 
 (defn merge-result [base left right]
   (let [repo (init-repo)]
     (try
-      (-> (doto repo
-            (write! base)
-            (commit! "base")
-            (branch! "left")
-            (write! left)
-            (commit! "left")
-            (branch! "right")
-            (write! right)
-            (commit! "right")
-            (checkout! "main")
-            (git "git diff left")
-            (git "git diff right")
-            (merge! "left")
-            (merge! "right"))
-          (print-content))
-
+      (prepare-merge! repo base left right)
+      (try
+        (merge! repo "right")
+        [:success (read-content repo)]
+        (catch Exception _
+          [:conflict (read-content repo)]))
       (finally
+        (read-content repo)
         (delete! repo)))))
 
-(defn stripl [s]
-  (-> s
-      (str/split-lines)
-      (->> (map str/triml)
-           (str/join "\n"))))
+(defn example [n]
+  {:base (slurp (str "test/kurtharriger/util/examples/ex" n "/base.clj"))
+   :left    (slurp (str "test/kurtharriger/util/examples/ex" n "/left.clj"))
+   :right    (slurp (str "test/kurtharriger/util/examples/ex" n "/right.clj"))})
+
+(defn merge-result-example [n]
+  (let [{:keys [base left right]} (example n)]
+    (merge-result base left right)))
 
 (comment
-  (merge-result (stripl "The common ancestor version.\n
-                 item 1\n
-                 item 2\n
-                 item 3\n"
-                        )
+  (println (merge-result-example 1))
+  (println (merge-result-example 2))
 
-                (stripl "The left version.\n\n
-                 item 0\n
-                 item 1\n
-                 item 2\n")
+  #_end_comment)
 
-                (stripl "The right version.\n
-                 item 0\n
-                 item 3\n
-                 item 2\n"))
-
-;; end comment
-  )

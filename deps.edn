@@ -3,8 +3,7 @@
         babashka/process    {:mvn/version "0.5.22"}
         babashka/fs         {:mvn/version "0.5.20"}}
  :aliases
- {
-;;   :run-m {:main-opts ["-m" "kurtharriger.clj-mergetool"]}
+ {;;   :run-m {:main-opts ["-m" "kurtharriger.clj-mergetool"]}
 ;;   :run-x {:ns-default kurtharriger.clj-mergetool
 ;;           :exec-fn greet
 ;;           :exec-args {:name "Clojure"}}
