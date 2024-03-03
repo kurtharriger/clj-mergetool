@@ -1,7 +1,9 @@
 {:paths ["src" "resources"]
- :deps {org.clojure/clojure {:mvn/version "1.11.1"}
-        babashka/process    {:mvn/version "0.5.22"}
-        babashka/fs         {:mvn/version "0.5.20"}}
+ :deps {org.clojure/clojure     {:mvn/version "1.11.1"}
+        babashka/process        {:mvn/version "0.5.22"}
+        babashka/fs             {:mvn/version "0.5.20"}
+        rewrite-clj/rewrite-clj {:mvn/version "1.1.47"}
+        juji/editscript         {:mvn/version "0.6.3"}}
  :aliases
  {;;   :run-m {:main-opts ["-m" "kurtharriger.clj-mergetool"]}
 ;;   :run-x {:ns-default kurtharriger.clj-mergetool

@@ -1,7 +1,10 @@
 (ns kurtharriger.util.simulator
   (:require [clojure.string :as str :refer [triml]]
             [babashka.fs :as fs]
-            [babashka.process :refer [process shell sh]]))
+            [babashka.process :refer [process shell sh]]
+            [editscript.core :as e]
+            [clojure.tools.reader.edn :as edn]
+            [rewrite-clj.zip :as z]))
 
 (defn git [{:keys [dir print?] :as repo} & args]
   {:pre [(string? dir)]}
@@ -75,9 +78,9 @@
         (delete! repo)))))
 
 (defn example [n]
-  {:base (slurp (str "test/kurtharriger/util/examples/ex" n "/base.clj"))
-   :left    (slurp (str "test/kurtharriger/util/examples/ex" n "/left.clj"))
-   :right    (slurp (str "test/kurtharriger/util/examples/ex" n "/right.clj"))})
+  {:base  (slurp (str "test/kurtharriger/util/examples/ex" n "/base.clj"))
+   :left  (slurp (str "test/kurtharriger/util/examples/ex" n "/left.clj"))
+   :right (slurp (str "test/kurtharriger/util/examples/ex" n "/right.clj"))})
 
 (defn merge-result-example [n]
   (let [{:keys [base left right]} (example n)]
@@ -89,3 +92,20 @@
 
   #_end_comment)
 
+(comment
+;; sorta works, edn only seems to read first form and whitespace is not preserved
+
+  (let [{:keys [base left right]} (example 1)
+        base (edn/read-string base)
+        left (edn/read-string left)
+        right (edn/read-string right)
+        left-diff (e/diff base left)
+        right-diff (e/diff base right)
+
+        full-diff (e/combine left-diff right-diff)
+
+        result (e/patch base full-diff)]
+    (prn result))
+
+
+  #_end_comment)
