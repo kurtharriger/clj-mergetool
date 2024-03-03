@@ -4,7 +4,9 @@
             [babashka.process :refer [process shell sh]]
             [editscript.core :as e]
             [clojure.tools.reader.edn :as edn]
-            [rewrite-clj.zip :as z]))
+            [rewrite-clj.zip :as z]
+            [rewrite-clj.node :as n]
+            [rewrite-clj.parser :as p]))
 
 (defn git [{:keys [dir print?] :as repo} & args]
   {:pre [(string? dir)]}
@@ -85,27 +87,3 @@
 (defn merge-result-example [n]
   (let [{:keys [base left right]} (example n)]
     (merge-result base left right)))
-
-(comment
-  (println (merge-result-example 1))
-  (println (merge-result-example 2))
-
-  #_end_comment)
-
-(comment
-;; sorta works, edn only seems to read first form and whitespace is not preserved
-
-  (let [{:keys [base left right]} (example 1)
-        base (edn/read-string base)
-        left (edn/read-string left)
-        right (edn/read-string right)
-        left-diff (e/diff base left)
-        right-diff (e/diff base right)
-
-        full-diff (e/combine left-diff right-diff)
-
-        result (e/patch base full-diff)]
-    (prn result))
-
-
-  #_end_comment)
