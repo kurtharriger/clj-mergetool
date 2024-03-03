@@ -80,9 +80,9 @@
         (delete! repo)))))
 
 (defn example [n]
-  {:base  (slurp (str "test/kurtharriger/util/examples/ex" n "/base.clj"))
-   :left  (slurp (str "test/kurtharriger/util/examples/ex" n "/left.clj"))
-   :right (slurp (str "test/kurtharriger/util/examples/ex" n "/right.clj"))})
+  {:base  (slurp (str "test/kurtharriger/examples/ex" n "/base.clj"))
+   :left  (slurp (str "test/kurtharriger/examples/ex" n "/left.clj"))
+   :right (slurp (str "test/kurtharriger/examples/ex" n "/right.clj"))})
 
 (defn merge-result-example [n]
   (let [{:keys [base left right]} (example n)]
