@@ -1,4 +1,4 @@
-(ns kurtharriger.util.simulator
+(ns kurtharriger.notebook.notes001
   (:require [clojure.string :as str :refer [triml]]
             [editscript.core :as e]
             [clojure.tools.reader.edn :as edn]

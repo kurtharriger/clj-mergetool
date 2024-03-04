@@ -1,4 +1,4 @@
-(ns kurtharriger.util.simulator
+(ns kurtharriger.notebook.notes002
   (:require [editscript.diff.a-star :as astar]
             [editscript.core :as e]
             [editscript.edit :as edit]
@@ -176,3 +176,12 @@
 (let [{:keys [base left right]} (example 2)
       left-diff #break (e/diff base left)]
   (pr-str left-diff))
+
+
+;; wait.. I editscript diff works on the sexp and rewrite-clj has
+;; zipper that skips whitespace and thus perhaps the patch path
+;; may still work..  the replacement likely does not include the whitespace
+;; thus I may still need to pull the replacement text from the file
+;; being merged which also likely requires modifications to editscript
+;; but using the zipper to apply the patch is still liekly needed regardless
+;; and not wasted work
