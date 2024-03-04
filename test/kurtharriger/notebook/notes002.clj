@@ -71,6 +71,18 @@
 
   #_end_comment)
 
+(comment
+
+ ;; explore with portal
+ ;; clj -A:dev/reloaded:repl/reloaded:repl/headless
+  (let [base (-> (example 1) :base)]
+    (tap> base))
+
+
+  #_end_comment
+    ;;
+  )
+
 ;; we need to extend IType for startes
 ;; (defprotocol IType
 ;; (get-type [this] "Return a type keyword, :val, :map, :lst, etc."))
@@ -93,14 +105,74 @@
         left-diff #break (e/diff base left)]
     (pr-str left-diff))
 
-  #_end_comment)
+
+  ;; Nodes seem to be created within the algorithm
+  ;; by index-collection and index-value and thus editscript
+  ;; does not seem to be direclty extensible via the protocol
+  ;; and i wasn't sure how I would implement get-path without
+  ;; some details from editscript.  However it might work  to
+  ;; modify edit script to use a factory method here and also
+  ;; then edit script will provide the path when creating the
+  ;; node
+
+  ;;  (let [node (->Node path data parent {} nil nil nil 0 0 1)]
+  )
+
+(deftype  Node [#_PersistentVector path
+                value
+                parent
+                ^:unsynchronized-mutable children
+                ^:unsynchronized-mutable first
+                ^:unsynchronized-mutable last
+                ^:unsynchronized-mutable next
+                ^:unsynchronized-mutable index
+                ^:unsynchronized-mutable ^long order
+                ^:unsynchronized-mutable ^long size]
+  astar/INode
+  (get-path [_] path)
+  (get-key [this] (-> this astar/get-path peek))
+  (get-value [_] value)
+  (get-parent [_] parent)
+  (get-children [_] children)
+  (get-first [_] first)
+  (get-last [_] last)
+  (get-next [_] next)
+  (set-next [_ n] (set! next n))
+  (get-order [_] order)
+  (set-order [this o] (set! order (long o)) this)
+  (get-size [_] size)
+  (set-size [this s] (set! size (long s)) this)
+  (add-child [_ node]
+    (set! children (assoc children (astar/get-key node) node))
+    (when last (astar/set-next last node))
+    (when-not first (set! first node))
+    (set! last node)
+    node))
 
 
-(comment
+(defn create-node [path value parent children first last next index order size]
+  (->Node path value parent children first last next index order size))
 
-  (let [base (-> (example 1) :base)]
-    (binding [*print-meta* true]
-      (:children base))
+(defn index-collection
+  [type order path data parent]
+  (let [node #break (astar/->Node path data parent {} nil nil nil 0 0 1)]
+    (astar/add-child parent node)
+    (case type
+      (:map :vec) (#'astar/associative-children order path data node)
+      :set        (#'astar/set-children order path data node)
+      :lst        (#'astar/list-children order path data node))
+    (let [^long cs (->> (#'astar/get-children node) vals (map #'astar/get-size) (reduce +))
+          size     (+ (#'astar/get-size node) cs)]
+      (doto node
+        (#'astar/set-order @order)
+        (#'astar/set-size size))
+      (#'astar/inc-order order size))
+    node))
 
-    #_end_comment)
+(alter-var-root #'astar/index-collection (constantly index-collection))
 
+
+
+(let [{:keys [base left right]} (example 2)
+      left-diff #break (e/diff base left)]
+  (pr-str left-diff))
