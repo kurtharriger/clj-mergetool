@@ -20,7 +20,7 @@
 ;; => "[[[3 1 1 0] :r mapv]]"
 
 
-
+;; manual translation of the above diff
 (let [{:keys [base left right]} (example 2)
       base (p/parse-string-all base)
       z (zip/of-node base)
