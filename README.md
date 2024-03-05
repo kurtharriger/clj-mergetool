@@ -77,7 +77,7 @@ Started March 2024
 
 # Roadmap:
 
-- March 2024
+## March 2024
 
 MVP using editscript and rewrite-clj.
 
@@ -85,18 +85,18 @@ Diff with editscript and apply patch with rewrite-clj to preserve whitespace. Th
 
 At this stage it is probably best to use clj-mergetool as fallback when standard git merge fails.
 
-- April 2024
+## April 2024
 
 Fork editscript to work over rewrite-clj nodes to preserve whitespace.
 Potentailly reconsider diff representation.
 Update combine to identify actual conflicts.
 
-- May 2024
+## May 2024
 
 Run under babashka for performance and cross platform support.
 Usable as primary git mergetool.
 
-- June 2024
+## June 2024
 
 Better visualization of diffs?
 Even higher level symantic operations?
