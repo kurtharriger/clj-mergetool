@@ -9,8 +9,51 @@
 
 
 (comment
-  (println (merge-result-example 1))
-  (println (merge-result-example 2))
+
+;; chatgpt generated examples a bit lame but good enough
+;; to start.
+
+  (-> (merge-result-example 1) second println)
+;; <<<<<<< HEAD
+;; (defn render-page [content]
+;;   (println "Rendering page"))
+
+;; (defn query-database [query]
+;;   (println "Querying database"))
+;; =======
+;; (defn query-database [query]
+;;   (println "Query database with cache"))
+
+;; (defn render-page [content]
+;;   (println "Rendering page with cache"))
+;; >>>>>>> right
+
+
+  (-> (merge-result-example 2) second println)
+;; (defn analyze-data [data]
+;; <<<<<<< HEAD
+;;   (let [processed (map process-item data)
+;;         filtered (filter relevant? processed)
+;;         results (reduce combine-results {} filtered)]
+;; =======
+;;   (let [processed (mapv process-item data) ; Changed map to mapv for vector output
+;;         results (reduce combine-results {} processed)]
+;; >>>>>>> right
+;;     results))
+
+
+  (-> (merge-result-example 3) second println)
+;; {:deps {org.clojure/clojure {:mvn/version "1.10.1"}
+;; <<<<<<< HEAD
+;;         org.clojure/core.async {:mvn/version "1.3.612"}}}
+;; =======
+;;         org.clojure/core.async {:mvn/version "1.3.610"}
+;;         clj-http {:mvn/version "3.11.0"}}}
+;; >>>>>>> right
+
+
+
+
 
   #_end_comment)
 
@@ -64,7 +107,7 @@
     (prn full-diff)
     (prn result)
     (pr-str result))
-  ;; => "<forms:\n  (defn analyze-data [data]\n    (let [processed (mapv process-item data) ; Changed map to mapv for vector output\n          results (reduce combine-results {} processed)]\n      results))\n  \n>"
+  ;; => "<forms:  (defn analyze-data [data]    (let [processed (mapv process-item data) ; Changed map to mapv for vector output          results (reduce combine-results {} processed)]      results))  >"
   )
 
 
@@ -88,3 +131,33 @@
   #_end_comment)
 
 
+(comment
+
+  (let [{:keys [base left right]} (example 3)
+
+        base (edn/read-string base)
+        left (edn/read-string left)
+        right (edn/read-string right)
+
+        left-diff (e/diff base left)
+        right-diff (e/diff base right)
+
+        full-diff (e/combine left-diff right-diff)
+
+        result (e/patch base full-diff)]
+    ;; (prn base)
+    ;; (prn left)
+    ;; (prn right)
+    (prn left-diff)
+    (prn right-diff)
+    (prn full-diff)
+    (prn result)
+    (println result))
+
+;; [[[:deps org.clojure/core.async :mvn/version] :r "1.3.612"]]
+;; [[[:deps clj-http] :+ #:mvn{:version "3.11.0"}]]
+;; [[[:deps org.clojure/core.async :mvn/version] :r "1.3.612"] [[:deps clj-http] :+ #:mvn{:version "3.11.0"}]]
+;; {:deps {org.clojure/clojure #:mvn{:version "1.10.1"}, org.clojure/core.async #:mvn{:version "1.3.612"}, clj-http #:mvn{:version "3.11.0"}}}
+;; {:deps {org.clojure/clojure #:mvn{:version 1.10.1}, org.clojure/core.async #:mvn{:version 1.3.612}, clj-http #:mvn{:version 3.11.0}}}
+
+  #_end_comment)
