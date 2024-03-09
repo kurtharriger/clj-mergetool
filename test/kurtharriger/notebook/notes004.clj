@@ -1,13 +1,15 @@
 (ns kurtharriger.notebook.notes004
-  (:require [editscript.diff.a-star :as astar]
-            [clojure.tools.reader.edn :as edn]
-            [editscript.core :as e]
-            [editscript.edit :as edit]
-            [rewrite-clj.zip :as zip]
-            [rewrite-clj.node :as n]
-            [rewrite-clj.parser :as p]
-            [rewrite-clj.zip :as z]
-            [meander.epsilon :as m]))
+  (:require
+   [kurtharriger.util.simulator :refer [example]]
+   [editscript.diff.a-star :as astar]
+   [clojure.tools.reader.edn :as edn]
+   [editscript.core :as e]
+   [editscript.edit :as edit]
+   [rewrite-clj.zip :as zip]
+   [rewrite-clj.node :as n]
+   [rewrite-clj.parser :as p]
+   [rewrite-clj.zip :as z]
+   [meander.epsilon :as m]))
 
 
 (let [{:keys [base left right]} (example 2)
@@ -81,43 +83,33 @@
 ;; lets change path to zipper movements
 (defn zpath [path]
   (let [down (for [nav path
-                   r (cons `(z/down)
+                   r (cons :down
                            (cond
-                             (number? nav) (repeat nav `(z/right))
+                             (number? nav) (repeat nav :right)
                                                  ;; todo keyword nav in map
                              :else (throw (ex-info "not implemented" {}))))]
                r)
-        up (repeat (count path) `(z/up))]
+        up (repeat (count path) :up)]
     [down up]))
 
 
 (zpath [3 1 1 0])
-;; => [((rewrite-clj.zip/down)
-;;      (rewrite-clj.zip/right)
-;;      (rewrite-clj.zip/right)
-;;      (rewrite-clj.zip/right)
-;;      (rewrite-clj.zip/down)
-;;      (rewrite-clj.zip/right)
-;;      (rewrite-clj.zip/down)
-;;      (rewrite-clj.zip/right)
-;;      (rewrite-clj.zip/down))
-;;     ((rewrite-clj.zip/up) (rewrite-clj.zip/up) (rewrite-clj.zip/up) (rewrite-clj.zip/up))]
+;; => [(:down :right :right :right :down :right :down :right :down) (:up :up :up :up)]
 
 (zpath [0])
-;; => [((rewrite-clj.zip/down)) ((rewrite-clj.zip/up))]
+;; => [(:down) (:up)]
 
 (zpath [:a])
-;; => Error printing return value (ExceptionInfo) at kurtharriger.notebook.notes004/navigate$iter$fn (NO_SOURCE_FILE:82).
+;; => Error printing return value (ExceptionInfo) at kurtharriger.notebook.notes004/zpath$iter$fn (NO_SOURCE_FILE:90).
 ;;    not implemented
-
 
 ;; run down or up of zpath
 (defn run-zpath* [z zpath*]
   (reduce (fn [z nav]
             (condp  = nav
-              `(z/down) (z/down z)
-              `(z/right) (z/right z)
-              `(z/up) (z/up z))) z zpath*))
+              :down (z/down z)
+              :right (z/right z)
+              :up (z/up z))) z zpath*))
 
 
 (defn at-zpath [z [down up] f]
@@ -143,5 +135,6 @@
       n (zip/root-string z)]
   (pr-str n))
 ;; => "\"(defn analyze-data [data]\\n  (let [processed (mapv process-data data)\\n        results (reduce combine-results {} processed)]\\n    results))\\n\""
+
 
 

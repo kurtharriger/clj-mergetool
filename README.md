@@ -75,6 +75,34 @@ The resulting patch is conflict free:
 TBD.
 Started March 2024
 
+clone repo.
+build uberjar: clj -M:uberdeps
+add bin/clj-mergetool to path
+
+todo: clj-mergetool install
+
+NOTE:
+the merge tool needs to be configured in both .git/config or ~/.gitconfig
+and .gitattributes or ~/.gitattributes.
+
+.gitattributes is typically added to source control however
+.git/config unfortunatly cannot be included in source control
+
+git will use default behavior without warning if mergetool is refrenced
+in .gitattributes but not installed in .git/config
+
+```
+
+git config --local "merge.clj-mergetool.driver" "clj-mergetool merge %O %A %B"
+
+cat <<END >> .gitattributes
+*.clj merge=clj-mergetool
+*.edn merge=clj-mergetool
+END
+```
+
+https://github.com/Praqma/git-merge-driver/blob/master/.gitconfig
+
 # Roadmap:
 
 ## March 2024
@@ -111,3 +139,7 @@ Even higher level symantic operations?
 Copyright © 2024 Kurt Harriger
 
 Distributed under the Eclipse Public License version 1.0.
+
+```
+
+```

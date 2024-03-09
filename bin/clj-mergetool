@@ -1,0 +1,5 @@
+#! /bin/bash -e
+
+script_dir=$(dirname $(readlink -f $0))
+JAR="$script_dir/../target/kurtharriger.clj-mergetool.jar"
+java -cp $JAR clojure.main -m kurtharriger.clj-mergetool "$@"

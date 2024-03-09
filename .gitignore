@@ -28,3 +28,6 @@
 /classes
 /target
 .clj-kondo/babashka
+.clj-kondo/
+.clerk/
+.joyride/
