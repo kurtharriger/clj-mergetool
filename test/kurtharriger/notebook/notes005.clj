@@ -221,4 +221,80 @@
       (z/root-string))
 
  ;;
+
+  #_(defn move-path [zipper path]
+      (reduce (fn [zipper p]
+                (cond
+                  (number? p)   (move-to-index zipper p)
+                  (keyword? p)  (move-to-map-value zipper p)))
+              zipper path))
+
+
+  (-> (z/of-string (pr-str [1 {:a 1 :b [2 3]}]))
+      (move-path [1 :b 0])
+      (z/edit (constantly 4))
+      (z/root-string))
+  ;; => "[1 {:a 1, :b [4 3]}]"
+
+  ; note: z/root returns node not zipper
+  ; use z/root z/of-node to create new zipper at root
+  (defn patch1 [zipper edit]
+    (m/match edit
+      [?path :-] (-> zipper (move-path  ?path) (z/remove) (z/root) (z/of-node))
+      [?path :+ ?v] (-> zipper (move-path  ?path) (z/insert-right ?v) (z/root) (z/of-node))
+      [?path :r ?v] (-> zipper (move-path  ?path) (z/remove)  (z/insert-right ?v) (z/root) (z/of-node))))
+
+
+  (let [base [1 2 3]
+        zipper (z/of-string (pr-str base))
+        left (-> zipper
+                 (move-path [1])
+                 (z/remove)
+                 (z/root)
+                 (n/sexpr))
+        edits (e/get-edits (e/diff base left))
+        edit (first edits)
+        zipper (patch1 zipper edit)
+        sexpr (-> zipper z/root n/sexpr)]
+    (= left sexpr))
+
+
+  ;; => "[1 3]"
+
+
+  (-> (z/of-string (pr-str [1 2 4]))
+      (move-path [1])
+      (z/insert-right 3)
+      (z/root-string))
+
+  (let [base [1 2 4]
+        zipper (z/of-string (pr-str base))
+        left (-> zipper
+                 (move-path [0])
+                 (z/insert-right 3)
+                 (z/root)
+                 (n/sexpr))
+        edits (e/get-edits (e/diff base left))
+        edit (first edits)
+        zipper (patch1 zipper edit)
+        sexpr (-> zipper z/root n/sexpr)]
+    #_(= left sexpr)
+    edit)
+  ;; => [[1] :+ 3]
+
+
+;; note: edit script vector indecies are 1 based
+ ;; todo fix move-to-next
+  (let [base []
+        zipper (z/of-string (pr-str base))
+        left [1]
+        edits (e/get-edits (e/diff base left))
+        edit (first edits)]
+    #_(= left sexpr)
+    edit)
+    ;; => [[] :r [1]]
+
+ ;; insert at 0 is edit at root ...
   )
+
+
