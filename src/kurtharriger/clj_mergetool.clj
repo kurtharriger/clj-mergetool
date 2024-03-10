@@ -44,14 +44,32 @@
         diff (when diffs (reduce e/combine diffs))
         diff (when diff (e/get-edits diff))
 
-        {conflicts true patches false}
-        (group-by (fn [[_ v]] (> (count v) 1))
+        {conflicts true patch false}
+        (group-by (fn [v] (> (count v) 1))
                   ; more than one edit at same path
-                  (group-by first diff))]
+                  (map second (group-by first diff)))]
     (assoc ctx
            :diff diff
-           :patches patches
+           :patch patch
            :conflicts conflicts)))
+
+
+(defn move-to-map-key [zipper key]
+  (->> zipper
+       (z/down)
+       (iterate z/right)
+       (take-while (complement z/end?))
+       (partition 2)
+       (filter (fn [[kz]] (= key (z/sexpr kz))))
+       (ffirst)))
+
+(defn move-to-map-value [zipper key]
+  (-> zipper
+      (move-to-map-key key)
+      (z/right)))
+
+(defn move-to-index [zipper n]
+  (first (drop n (iterate z/right (z/down zipper)))))
 
 (defn edit [zipper patch]
   ;; todo implement edit
