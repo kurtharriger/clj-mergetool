@@ -1,5 +1,5 @@
 (ns kurtharriger.notebook.notes005
-  (:require [kurtharriger.clj-mergetool :refer :all]
+  (:require [kurtharriger.clj-mergetool :refer [init resolve-input parse diff mergetool output]]
             [portal.api :as portal]
             [editscript.core :as e]
             [rewrite-clj.parser :as p]
@@ -30,6 +30,8 @@
   (type conflict)
   (type (e/get-edits conflict))
   (group-by first (e/get-edits conflict))
+  ;; => {[2] [[[2] :r 3] [[2] :r 4]]}
+
 
 
 
@@ -180,14 +182,14 @@
                      (= :b (z/sexpr kz))))
            (ffirst)))
 
-  #_(defn move-to-map-key [zipper key]
-      (->> zipper
-           (z/down)
-           (iterate z/right)
-           (take-while (complement z/end?))
-           (partition 2)
-           (filter (fn [[kz vz]] (= key (z/sexpr kz))))
-           (ffirst)))
+  (defn move-to-map-key [zipper key]
+    (->> zipper
+         (z/down)
+         (iterate z/right)
+         (take-while (complement z/end?))
+         (partition 2)
+         (filter (fn [[kz vz]] (= key (z/sexpr kz))))
+         (ffirst)))
 
 
   (-> (z/of-string (pr-str {:a 1 :b 2}))
@@ -210,8 +212,8 @@
       (z/edit (constantly "1.3.612"))
       (z/root-string))
 
-  #_(defn move-to-index [zipper n]
-      (first (drop n (iterate z/right (z/down zipper)))))
+  (defn move-to-index [zipper n]
+    (first (drop n (iterate z/right (z/down zipper)))))
 
   (-> (z/of-string (pr-str [1 {:a 1 :b [2 3]}]))
       (move-to-index 1)
@@ -222,12 +224,12 @@
 
  ;;
 
-  #_(defn move-path [zipper path]
-      (reduce (fn [zipper p]
-                (cond
-                  (number? p)   (move-to-index zipper p)
-                  (keyword? p)  (move-to-map-value zipper p)))
-              zipper path))
+  (defn move-path [zipper path]
+    (reduce (fn [zipper p]
+              (cond
+                (number? p)   (move-to-index zipper p)
+                (keyword? p)  (move-to-map-value zipper p)))
+            zipper path))
 
 
   (-> (z/of-string (pr-str [1 {:a 1 :b [2 3]}]))

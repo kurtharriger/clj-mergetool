@@ -4,8 +4,7 @@
             [editscript.edit :as edit]
             [rewrite-clj.zip :as z]
             [rewrite-clj.node :as n]
-            [rewrite-clj.parser :as p]
-            [kurtharriger.util.simulator :refer [example]]))
+            [rewrite-clj.parser :as p]))
 
 (defn example [n]
   {:base  (p/parse-file-all (str "test/kurtharriger/examples/ex" n "/base.clj"))

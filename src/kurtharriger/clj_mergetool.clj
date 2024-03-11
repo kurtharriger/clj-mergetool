@@ -69,7 +69,7 @@
       (z/right)))
 
 (defn move-to-index [zipper n]
-  (first (drop n (iterate z/right (z/down zipper)))))
+  (first (drop (dec n) (iterate z/right (z/down zipper)))))
 
 (defn move-path [zipper path]
   (reduce (fn [zipper p]
@@ -80,10 +80,7 @@
 
 (defn edit [zipper patch]
   ;; todo implement edit
-  (let [patch (sort-by first patch)
-        _   (println (pr-str patch))
-        patch (reverse patch)])
-  (println "edit not implemeted:")
+  (println "edit not implemeted:" (pr-str patch))
   zipper)
 
 (defn mergetool [{:keys [op base diff conflicts] :as ctx}]
