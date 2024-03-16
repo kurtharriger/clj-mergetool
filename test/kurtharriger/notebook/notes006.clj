@@ -67,11 +67,13 @@
 (defn move-root [zipper]
   (z/of-node (z/root zipper)))
 
+;;todo navigation should be based on type
 (defn focus* [zipper path]
   (reduce (fn [zipper p]
+            (tap> zipper)
             (cond
-              (number? p)   (move-to-index zipper p)
-              (keyword? p)  (move-to-map-key zipper p)))
+              (= (z/tag zipper) :map) (move-to-map-key zipper p)
+              (number? p)   (move-to-index zipper p)))
           (move-root zipper) path))
 
 
@@ -195,7 +197,7 @@
 
 (edits {:a 1} {:a 1 :b 2}) ;; => [[[:b] :+ 2]]
 ;; this doesn't work since key doesn't exist...
-;(-> (focus {:a 1} [:b]))
+; (-> (focus {:a 1} [:b]))
 ; perhaps when operation is add and last element in path is keyword
 ; rewrite as [[[] :+ :b 2]] ?
 (-> (focus {:a 1} [])
