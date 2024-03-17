@@ -162,7 +162,6 @@
 ;; when inserting into sets for now
 (defmethod patch :+ [zipper [path op key value :as zedit]]
   (let [zipper (focus* zipper path)]
-    (println :e (z/tag zipper) key value)
     (cond
       (= (z/tag zipper) :map)
       (-> zipper
@@ -174,7 +173,7 @@
       ;; at the end
       ;; (edits #{0 1} #{0 2 3 1}) ;; => [[[3] :+ 3] [[2] :+ 2]]
       (= (z/tag zipper) :set)
-      (do (println :insert value) (z/append-child zipper value))
+      (z/append-child zipper value)
 
       :else
       ;; index returned for add at target positon not position to add from
@@ -211,4 +210,130 @@
 
 (-> (zipper [0])
     (patch [[] :+ 0 1])
+    (z/root-string))
+
+(edits #{} #{0})      ;; => [[[] :r #{0}]]
+(edits [#{}] [#{0}])    ;; => [[[] :r #{0}]]
+
+(zedits [] #{0}) ;; => [[[] :r nil #{0}]]
+
+
+
+(defmethod patch :default [zipper [path op key value :as zedit]]
+  (throw (ex-info "No patch method" {:zedit zedit})))
+
+(defmethod patch :r [zipper [path op key value :as zedit]]
+  (let [zipper (focus* zipper path)]
+    (cond
+      (= (z/tag zipper) :map)
+      (-> zipper
+          (move-to-map-key key)
+          (z/right)
+          (z/replace value))
+
+      ;; edit-script deletes and readds indecies within a set
+      ;; thus key is always nil
+      ;; (zedits #{0} #{1}) ;; => [[[] :- 0] [[] :+ 1 1]]
+      ;; in future index would be useful for set as even though
+      ;; set is semantically unordered the textural representation
+      ;; might be ordered
+      (= (z/tag zipper) :set)
+      (do (assert (nil? key) "unexpected index for set")
+          (z/replace zipper value))
+
+      :else
+      ;; nil replaces entire object (likely empty)
+      ;; index replaces item at that index
+      (if (nil? key) (z/replace zipper value)
+          (-> zipper
+              (move-to-index key)
+              (z/replace value))))))
+
+(zedits #{} #{0}) ;; => [[[] :r nil #{0}]]
+
+(-> (zipper [])
+    (patch [[] :r nil #{0}])
+    (z/root-string)) ;; => "#{0}"
+
+
+(zedits [#{}] [#{0}]) ;; => [[[] :r 0 #{0}]]
+
+(-> (zipper [#{}])
+    (patch [[] :r 0 #{0}])
+    (z/root-string)) ;; => "[#{0}]"
+
+(defn children [zipper]
+  (->> zipper
+       (z/down)
+       (iterate z/right)
+       (take-while (complement z/end?))))
+
+(defn find-set-item [zipper key]
+  (->> (children zipper)
+       (drop-while (complement #(= key (z/sexpr %))))
+       (first)))
+
+(defmethod patch :- [zipper [path op key value :as zedit]]
+  (let [zipper (focus* zipper path)]
+    (cond
+      (= (z/tag zipper) :map)
+      (-> zipper
+          (move-to-map-key key)
+          (z/remove)
+          (z/right)
+          (z/remove))
+
+      ;; edit-script deletes and readds indecies within a set
+      ;; thus key is always nil
+      ;; (zedits #{0} #{1}) ;; => [[[] :- 0] [[] :+ 1 1]]
+      ;; in future index would be useful for set as even though
+      ;; set is semantically unordered the textural representation
+      ;; might be ordered
+      (= (z/tag zipper) :set)
+      (do (assert (not (nil? key)) "expected set element to remove")
+          (-> zipper
+              (find-set-item  key)
+              (z/remove)))
+
+      :else
+      (do
+        (assert (not (nil? key)) "expecting index to remove")
+        (-> zipper
+            (move-to-index key)
+            (z/remove))))))
+
+
+(zedits {:a 1 :b 2} {:a 1}) ;; => [[[] :- :b]]
+
+(-> (zipper {:a 1 :b 2})
+    (patch [[] :- :b])
+    (z/root-string)) ;; => "{:a 1}"
+
+
+(zedits {:a 1} {}) ;; => [[[] :r nil {}]]
+
+(-> (zipper {:a 1})
+    (patch [[] :r nil {}])
+    (z/root-string))
+
+(zedits [0 1] [0]) ;; => [[[] :- 1]]
+
+(-> (zipper [0 1])
+    (patch [[] :- 1])
+    (z/root-string))
+
+(zedits [0 1] [1]) ;; => [[[] :- 0]]
+(-> (zipper [0 1])
+    (patch [[] :- 0])
+    (z/root-string))
+
+(zedits #{:a :b} #{:a}) ;; => [[[] :- :b]]
+(zedits #{:a :b} #{:b}) ;; => [[[] :- :a]]
+
+
+(-> (zipper #{:a :b})
+    ;(find-set-item  :a)
+    ;(z/remove)
+    (patch [[] :- :b])
+    (patch [[] :- :a])
     (z/root-string))
