@@ -176,19 +176,19 @@
       (z/append-child zipper value)
 
       :else
-      ;; index returned for add at target positon not position to add from
+      ;; index returned for add at target positon not position to into
       ;; eg (edits [0] [0 1]) ;; => [[[1] :+ 1]]
+      ;; eg (edits [1] [0 1]) ;; => [[[0] :+ 0]]
       ;;  edit-script on empty vector represented as replace not add
       ;; (edits [] [0]) ;; => [[[] :r [0]]]
-      ;; thus edit-script does not do an add at 0
-      ;; however in future I may rewrite [[[] :r [0]]]
+      ;; in future I may rewrite [[[] :r [0]]]
       ;; as [[[] :+ 0 0]] as 2 adds can be merged
       ;; (still w/ conflict as order is unclear)
       ;; but 2 replaces operations cannot be merged
-      (if (pos? key)
+      (if (not (nil? key))
         (-> zipper
-            (move-to-index (dec key))
-            (z/insert-right value))
+            (move-to-index key)
+            (z/insert-left value))
         (-> zipper (z/append-child value))))))
 
 (-> (zipper  #{0 1})
@@ -336,4 +336,9 @@
     ;(z/remove)
     (patch [[] :- :b])
     (patch [[] :- :a])
+    (z/root-string))
+
+(zedits [1] [0 1])
+(-> (zipper [1])
+    (patch [[] :+ 0 0])
     (z/root-string))
