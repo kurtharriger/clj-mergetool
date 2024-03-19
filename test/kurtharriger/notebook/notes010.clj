@@ -6,6 +6,8 @@
    [rewrite-clj.zip :as z]
    [nextjournal.clerk :as clerk]])
 
+;; more comprehensive list of basic edits examples
+
 (comment
   (clerk/serve! {:port 7778})
 

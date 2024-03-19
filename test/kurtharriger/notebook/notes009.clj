@@ -342,3 +342,54 @@
 (-> (zipper [1])
     (patch [[] :+ 0 0])
     (z/root-string))
+
+
+(zedits [:a] [:a :b])
+;; => [[[] :+ 1 :b]]
+
+;; (zedits [:a] [:a :b])
+;; (-> (zipper [:a])
+;;     (patch [[] :+ 1 :b])
+;;     (z/root-string))
+    ; Execution error at rewrite-clj.custom-zipper.core/insert-left (core.cljc:188).
+; Insert at top
+
+;; fix but checking if index is past end of vector to append instead
+(defmethod patch :+ [zipper [path op key value :as zedit]]
+  (let [zipper (focus* zipper path)]
+    (cond
+      (= (z/tag zipper) :map)
+      (-> zipper
+          (z/append-child key)
+          (z/append-child value))
+
+      ;; note: edit-script always returns edits to set at end
+      ;; and in reverse, for now just ignore position and insert
+      ;; at the end
+      ;; (edits #{0 1} #{0 2 3 1}) ;; => [[[3] :+ 3] [[2] :+ 2]]
+      (= (z/tag zipper) :set)
+      (z/append-child zipper value)
+
+      :else
+      ;; index returned for add at target positon not position to into
+      ;; eg (edits [0] [0 1]) ;; => [[[1] :+ 1]]
+      ;; eg (edits [1] [0 1]) ;; => [[[0] :+ 0]]
+      ;;  edit-script on empty vector represented as replace not add
+      ;; (edits [] [0]) ;; => [[[] :r [0]]]
+      ;; in future I may rewrite [[[] :r [0]]]
+      ;; as [[[] :+ 0 0]] as 2 adds can be merged
+      ;; (still w/ conflict as order is unclear)
+      ;; but 2 replaces operations cannot be merged
+      (if (or (nil? key) (>= key (count (children zipper))))
+        (-> zipper (z/append-child value))
+        (-> zipper
+            (move-to-index key)
+            (z/insert-left value))))))
+
+
+(-> (zipper [:a])
+    (patch [[] :+ 1 :b])
+    (z/root-string))
+;; => "[:a :b]"
+
+nil
