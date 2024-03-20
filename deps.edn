@@ -11,6 +11,7 @@
 ;;   :run-x {:ns-default kurtharriger.clj-mergetool
 ;;           :exec-fn greet
 ;;           :exec-args {:name "Clojure"}}
+  :dev {:paths ["dev"]}
   :run {:main-opts ["-m" "kurtharriger.clj-mergetool"]}
   :diff {:main-opts ["-m" "kurtharriger.clj-mergetool" "diff"]}
   :build {:deps {io.github.clojure/tools.build {:mvn/version "0.9.4"}}
