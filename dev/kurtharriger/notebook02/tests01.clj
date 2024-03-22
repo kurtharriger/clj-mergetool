@@ -31,6 +31,7 @@
    ;; skip comments and whitespace in test data file
    (->> (filter n/sexpr-able?)
         (partition 2)
+        ;(map (partial map n/string))
         (mapv #(apply ->TestCase %)))))
 
 (defn test-str [{:keys [pre post]}]
@@ -53,3 +54,9 @@
   (->> tests
        (map (juxt  test-expr-str test-str))
        (filter  (fn [[expr-str test-str]] (not= test-str expr-str)))))
+
+
+(defmethod print-method TestCase [{:keys [pre post]} writer]
+  (print-method {:pre (n/string pre) :post (n/string post)}
+                writer))
+
