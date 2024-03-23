@@ -31,3 +31,5 @@
 .clj-kondo/
 .clerk/
 .joyride/
+/local
+/tmp
