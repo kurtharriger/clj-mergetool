@@ -1,12 +1,6 @@
-(ns kurtharriger.util.simulator
-  (:require [clojure.string :as str :refer [triml]]
-            [babashka.fs :as fs]
-            [babashka.process :refer [process shell sh]]
-            [editscript.core :as e]
-            [clojure.tools.reader.edn :as edn]
-            [rewrite-clj.zip :as z]
-            [rewrite-clj.node :as n]
-            [rewrite-clj.parser :as p]))
+(ns kurtharriger.clj-mergetool.util.simulator
+  (:require [babashka.fs :as fs]
+            [babashka.process :refer [sh]]))
 
 (defn git [{:keys [dir print?] :as repo} & args]
   {:pre [(string? dir)]}
@@ -25,6 +19,7 @@
               :delete delete}]
     (when print? (println "cd" dir))
     (git repo "git init")
+    (git repo "git config merge.conflictStyle diff3")
     repo))
 
 (defn branch! [{:keys [dir] :as repo} branch]
@@ -70,11 +65,12 @@
   (let [repo (init-repo)]
     (try
       (prepare-merge! repo base left right)
-      (try
-        (merge! repo "right")
-        [:success (read-content repo)]
-        (catch Exception _
-          [:conflict (read-content repo)]))
+      (let [error (try
+                    (merge! repo "right")
+                    (catch Exception e
+                      e))]
+        {:conflict (some? error)
+         :content (read-content repo)})
       (finally
         (read-content repo)
         (delete! repo)))))
@@ -87,3 +83,27 @@
 (defn merge-result-example [n]
   (let [{:keys [base left right]} (example n)]
     (merge-result base left right)))
+
+
+(comment
+  ;; instead of storing base right left can use diff3 config option to create a
+  ;; single file from which the base, left, and right can be extracted
+  ;; this might make it easier to use clj-mergetool on 'as needed' to
+  ;; try to resolve conflicts until its robust enough to use as an acutal merge tool
+  ;; another option when running clj-mergetool in a git repo is
+  ;; to use git show :1:example.clj :2:example.clj :3:example.clj
+  ;; to pull the base, left, and right files into temp files rather
+  ;; than configuring as a merge tool
+  ;; diff3 conflict files are nice for when diff isn't as expected and
+  ;; someone wants to file an issue and attach the conflict file
+  ;; but git :1:example.clj :2:example.clj :3:example.clj is probably
+  ;; the best way to use the tool as needed in a repo
+  (for [i (range 1 4)
+        :let [conflict-file (str "test/kurtharriger/examples/ex" i "/conflict.clj")]]
+
+    (spit conflict-file (:content (merge-result-example i))))
+
+
+
+  ;;
+  )
