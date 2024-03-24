@@ -58,7 +58,6 @@
   (if-not (and (= :merge op) (empty? conflicts))
     ctx
     (let [base (-> base :parsed)
-          _ (prn (type base) (type editscript))
           patched (patch/patch base editscript)
           result (n/string patched)]
       (assoc ctx :merged result))))
