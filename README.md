@@ -6,11 +6,11 @@ A git diff and merge tool for edn and clojure code. Semantic diffs for conflict 
 
 Initial funding for this project provided by [ClojuristsTogether](https://www.clojuriststogether.org/)!
 
-I would love your feedback and any example conflicts you have encountered in practice on open source code that you can publish as a git issue.
+# Share your merge conflicts
 
-# Share your conflicts
+I would an example merge conflicts you have encountered in practice on open source code that I can use in my unit tests during development.
 
-If you have an example conflict you can share for unit tests, please [open an issue](https://github.com/kurtharriger/clj-mergetool/issues/new) with the project link and the conflict file or the **three** source files from the index.
+Please [open an issue](https://github.com/kurtharriger/clj-mergetool/issues/new) with an example or any other feedback you may have.
 
 # Overview
 
