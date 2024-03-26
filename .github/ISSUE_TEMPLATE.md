@@ -1,3 +1,9 @@
+---
+name: Example Merge Conflict
+about: Use this template for providing an example merge conflict
+labels: example merge conflict
+---
+
 If you would like to share a git conflict, please ONLY share code that is publicly available and free to copy into my unit tests.
 
 - [ ] The attached code is publicly available and can be used in unit tests.

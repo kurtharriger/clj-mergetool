@@ -10,7 +10,7 @@ I would love your feedback and any example conflicts you have encountered in pra
 
 # Share your conflicts
 
-If you have an example conflict you can share for unit tests, please [open an issue](<(https://github.com/kurtharriger/clj-mergetool/issues/new)>) with the project link and the conflict file or the **three** source files from the index.
+If you have an example conflict you can share for unit tests, please [open an issue](https://github.com/kurtharriger/clj-mergetool/issues/new) with the project link and the conflict file or the **three** source files from the index.
 
 # Overview
 
