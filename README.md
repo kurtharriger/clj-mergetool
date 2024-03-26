@@ -4,48 +4,13 @@ A git diff and merge tool for edn and clojure code. Semantic diffs for conflict 
 
 # Status
 
-Initial funding for this experimental project provided by [ClojuristsTogether](https://www.clojuriststogether.org/)!
+Initial funding for this project provided by [ClojuristsTogether](https://www.clojuriststogether.org/)!
 
 I would love your feedback and any example conflicts you have encountered in practice on open source code that you can publish as a git issue.
 
 # Share your conflicts
 
-If you have an example conflict you can share for unit tests, please [open an issue](<(https://github.com/kurtharriger/clj-mergetool/issues/new)>) with the conflict file and/or source files merged from the index.
-
-Please note that this tool does a 3-way diff merge which also requires the ancestor commit which is typically NOT included in conflict files by default. To enable include the ancestor content in the conflict file you can enable it with git config:
-
-```
-git config --global merge.conflictStyle diff3
-```
-
-After enabling diff3, retry the merge:
-
-```
-git merge --abort
-git merge ....
-```
-
-When enabled you will also see an additional section bookmarked with `|||||||` - `=======`.
-
-```
-||||||| add178e
-        org.clojure/core.async {:mvn/version "1.3.610"}}}
-=======
-```
-
-This conflict file should then have everything I need to reconstruct the original **three files** required for merge. If this section does not exist in your conflict file you can alternatively pull the three source files from the git index:
-
-```
-git show :1:filename.clj > filename.base.clj
-git show :2:filename.clj > filename.current.clj
-git show :3:filename.clj > filename.other.clj
-```
-
-zip or tar these files and attach to the issue.
-
-```
-tar cJvf filename.tar.xz filename.*
-```
+If you have an example conflict you can share for unit tests, please [open an issue](<(https://github.com/kurtharriger/clj-mergetool/issues/new)>) with the project link and the conflict file or the **three** source files from the index.
 
 # Overview
 
