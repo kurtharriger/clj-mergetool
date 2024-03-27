@@ -8,7 +8,7 @@ Initial funding for this project provided by [ClojuristsTogether](https://www.cl
 
 # Share your merge conflicts
 
-I would an example merge conflicts you have encountered in practice on open source code that I can use in my unit tests during development.
+I would love to get any example merge conflicts you have encountered in practice on open source code that I can use in my unit tests during development.
 
 Please [open an issue](https://github.com/kurtharriger/clj-mergetool/issues/new) with an example or any other feedback you may have.
 
