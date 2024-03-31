@@ -11,16 +11,7 @@
 
 
 
-(comment
-  (-> (init :merge
-            "test/kurtharriger/examples/ex3/base.clj"
-            "test/kurtharriger/examples/ex3/left.clj"
-            "test/kurtharriger/examples/ex3/right.clj")
-      (resolve-input)
-      (parse)
-      (diff)
-      (mergetool)
-      (output)))
+
 
 
 

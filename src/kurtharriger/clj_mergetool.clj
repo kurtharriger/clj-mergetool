@@ -1,28 +1,30 @@
 (ns kurtharriger.clj-mergetool
   (:require [clojure.pprint :refer [pprint]]
+            [clojure.string :as string]
             [rewrite-clj.zip :as z]
             [rewrite-clj.node :as n]
             [rewrite-clj.parser :as p]
             [editscript.core :as e]
             [babashka.cli :as cli]
             [babashka.fs :as fs]
+            [babashka.process :refer [sh check]]
             [kurtharriger.clj-mergetool.patch :as patch])
   (:gen-class))
 
 
 (defn init [op base-filename left-filename right-filename]
   {:op    (if-not (keyword? op) (keyword op) op)
-   ;:output-file base-filename
+   :output-file left-filename
    :base  {:filename base-filename}
    :left  {:filename left-filename}
    :right {:filename right-filename}})
 
-(defn resolve-input [ctx]
-  (-> ctx
-      (update-in [:base :filename] #(when % (str (fs/absolutize %))))
-      (update-in [:left :filename] #(when % (str (fs/absolutize %))))
-      (update-in [:right :filename] #(when % (str (fs/absolutize %))))
-      (update-in [:output-file] #(when % (str (fs/absolutize %))))))
+#_(defn resolve-input [ctx]
+    (-> ctx
+        (update-in [:base :filename] #(when % (str (fs/absolutize %))))
+        (update-in [:left :filename] #(when % (str (fs/absolutize %))))
+        (update-in [:right :filename] #(when % (str (fs/absolutize %))))
+        (update-in [:output-file] #(when % (str (fs/absolutize %))))))
 
 (defn parse [ctx]
   (reduce
@@ -54,7 +56,7 @@
            :editscript editscript
            :conflicts conflicts)))
 
-(defn mergetool [{:keys [op base editscript conflicts] :as ctx}]
+(defn patch [{:keys [op base editscript conflicts] :as ctx}]
   (if-not (and (= :merge op) (empty? conflicts))
     ctx
     (let [base (-> base :parsed)
@@ -82,25 +84,88 @@
         (assoc ctx :exit-code 0))))
 
 
-(defn -main [& [op base left right]]
-  (System/exit
-   (-> (init op base left right)
-       (resolve-input)
-       ;(#(do (pprint %) %))
-       (parse)
-       (diff)
-       (mergetool)
-       (output)
-       :exit-code)))
+(defn mergetool [{{:keys [ancestor current other output]} :opts dir :dir}]
+  (-> {:op    :merge
+       :base  {:filename ancestor}
+       :left  {:filename current}
+       :right {:filename other}
+       :output (case output
+                 :overwrite current
+                 :stdout nil
+                 (fs/path dir output))}
+      (parse)
+      (diff)
+      (patch)
+      (output)))
+
+(defn unmerged-files [{dir :dir}]
+  (when-let
+   [out (-> (sh {:dir dir} "git diff --name-only --diff-filter=U")
+            (check)
+            (:out)
+            (not-empty))]
+    (string/split-lines out)))
+
+(defn load-from-index [{dir :dir :as opts} & files]
+  (let [parse (fn [file n]
+                (-> (sh opts "git" "show" (str ":" n ":" file))
+                    (check)
+                    (:out)
+                    (p/parse-string-all)))
+        files* (or (not-empty files)
+                   (unmerged-files opts))]
+    (not-empty
+     (for [file files*
+           :let [filename (str (fs/path dir file))]]
+       {:base {:filename filename
+               :parsed (parse file 1)}
+        :left {:filename filename
+               :parsed (parse file 2)}
+        :right {:filename filename
+                :parsed (parse file 3)}
+        :output-file filename}))))
 
 
 (comment
-  (-> (init :merge
-            "test/kurtharriger/examples/ex3/base.clj"
-            "test/kurtharriger/examples/ex3/left.clj"
-            "test/kurtharriger/examples/ex3/right.clj")
-      (resolve-input)
-      (parse)
-      (diff)
-      (mergetool)
-      (output)))
+  (unmerged-files {})
+  (load-from-index {})
+  (load-from-index {})
+
+  (unmerged-files {:dir "local/ex"})
+  (load-from-index {:dir "local/ex"})
+  (load-from-index {:dir "local/ex"} "base.clj")
+
+ ;;
+  )
+
+(defn remerge [{{files :files} :opts dir :dir}]
+  (let [results (->> (apply load-from-index {:dir dir} files)
+                     (map #(assoc % :op :merge))
+                     (map diff)
+                     (map patch)
+                     (map output))
+        exit-code (apply max (map :exit-code results))]
+    {:exit-code exit-code
+     :results results}))
+
+
+(comment
+ ;;
+  (load-from-index {:dir "local/ex"})
+  (remerge {:dir "local/ex" :files ["base.clj"]})
+
+  ;;
+  )
+
+(defn help [dispatch-args]
+  (println "Usage: clj-mergetool git remerge [filename ...]"))
+
+(defn -main [& args]
+  (let [result (cli/dispatch
+                [{:cmds ["git" "mergetool"] :fn #'mergetool :spec {:output {:default :overwrite}} :args->opts [:ancestor :current :other]}
+                 {:cmds ["git" "remerge"] :fn #'remerge :spec {:files {:coerce []}} :args->opts [:files]}
+                 {:cmds [] :fn #'help}] args)]
+    (when-let [ec (:exit-code result)]
+      (System/exit ec))))
+
+
