@@ -4,7 +4,8 @@
             [rewrite-clj.node :as n]
             [rewrite-clj.parser :as p]
             [editscript.core :as e]
-            [meander.epsilon :as m]))
+            [meander.epsilon :as m]
+            [clojure.test :refer [deftest is are run-test]]))
 
 (defn zipper
   "Coerce provided value into rewrite-clj zipper.
@@ -87,6 +88,21 @@
   [zipper path]
   (reduce move-to-child zipper path))
 
+
+(deftest test-focus
+  (are [node path f v] (= (f (focus (zipper node) path)) v)
+    nil [] z/tag :token
+    []  [] z/tag :vector
+    [{}] [0] z/tag :map
+    {:a []} [:a] z/tag :vector
+
+    [] [] z/sexpr []
+    [:a] [0] z/sexpr :a
+    #{:a :b} [:a] z/sexpr :a
+
+    {:a [{42 [:d]}]} [:a 0 42 0] z/sexpr :d))
+
+
 (defmulti add-child (fn [zipper key value] (z/tag zipper)))
 (defmulti remove-child (fn [zipper key] (z/tag zipper)))
 
@@ -120,38 +136,18 @@
 (->PatchState (zipper [:a]) (zipper [:b]))
 
 
+
 (defn patch*
   "This patch implementation ignores value from editscript and instead pulls
-   the value from the source node.  However because the editscript postions
-   are dependenat on the application of prior edits the inverse edit must also
-   be applied to the source document at the same time to keep positions in sync"
-  [^PatchState {:keys [azip bzip] :as s} [aedit bedit]]
-  (-> (m/match [aedit bedit]
-        [[?apath :r _] [?bpath :r _]] (-> s
-                                          (assoc :azip (z/replace    (focus azip ?apath) (z/node (focus bzip ?bpath))))
-                                          (assoc :bzip (z/replace    (focus bzip ?bpath) (z/node (focus azip ?apath)))))
-        [[?apath :+ _] [?bpath :-]] (-> s
-                                        (assoc :azip (add-child (focus azip (butlast ?apath)) (last ?apath) (z/node (focus bzip ?bpath))))
-                                        (assoc :bzip (remove-child (focus bzip (butlast ?bpath)) (last ?bpath))))
-        [[?apath :-] [?bpath :+ _]] (-> s
-                                        (assoc :azip (remove-child (focus azip (butlast ?apath)) (last ?apath)))
-                                        (assoc :bzip (add-child (focus bzip (butlast ?bpath)) (last ?bpath) (z/node (focus azip ?apath)))))
-        [[?apath :+ _] [?bpath :+ _]] (-> s
-                                          (assoc :azip (add-child (focus azip (butlast ?apath)) (last ?apath) (z/node (focus bzip ?bpath))))
-                                          (assoc :bzip (add-child (focus bzip (butlast ?bpath)) (last ?bpath) (z/node (focus bzip ?apath)))))
-        [[?apath :-] [?bpath :-]] (-> s
-                                      (assoc :azip (remove-child (focus azip (butlast ?apath)) (last ?apath)))
-                                      (assoc :bzip (remove-child (focus bzip (butlast ?bpath)) (last ?bpath)))))
-      (update :azip root)
-      (update :bzip root)))
+   the value from the source node."
+  [^PatchState {:keys [azip bzip] :as s} [aedit]]
+  (prn :azip (z/string azip) :bzip (z/string bzip) :edit aedit)
+  (-> (m/match aedit
+        [?apath :r _] (assoc s :azip (z/replace (focus azip ?apath) (z/node (focus bzip ?apath))))
+        [?apath :+ _] (assoc s :azip (add-child (focus azip (butlast ?apath)) (last ?apath) (z/node (focus bzip ?apath))))
+        [?apath :-] (assoc s :azip (remove-child (focus azip (butlast ?apath)) (last ?apath))))
+      (update :azip root)))
 
-
-(defn patch*  [zipper edit]
-  (root
-   (m/match edit
-     [?path :r ?value] (z/replace    (focus zipper ?path) ?value)
-     [?path :+ ?value] (add-child    (focus zipper (butlast ?path)) (last ?path) ?value)
-     [?path :-]        (remove-child (focus zipper (butlast ?path)) (last ?path)))))
 (comment
   (->  nil
        (zipper)
@@ -170,7 +166,9 @@
       (z/append-child value)))
 
 (defmethod add-child :set [zipper key value]
-  (assert (= key value))
+; removed assertion since key is the sexpr from path
+; but value now is a rewrite-clj
+  ;(assert (= key value))
   (-> zipper
       (z/append-child value)))
 
@@ -194,9 +192,6 @@
       (focus [key])
       (z/remove)))
 
-(defrecord PatchResult [anode bnode])
-(defmethod pprint/simple-dispatch PatchResult [s] (pr (update-vals s n/sexpr)))
-;(remove-method pprint/simple-dispatch PatchResult)
 
 (defn patch
   "Applies an editscript patch to rewrite-clj node."
@@ -210,15 +205,47 @@
         {:keys [azip bzip]} (reduce patch* (->PatchState (zipper anode) (zipper bnode))
                                     (map vector aeditscript beditscript))]
       ;(assert (= (z/sexpr azip) (z/sexpr bzip)))
-    (->PatchResult (z/root azip) (z/root bzip))))
+    (z/root azip)))
 
+(defrecord PrintableNode [node])
+;; pr/prn is readable its just pprint that seems unreadable
+;(defmethod print-method PrintableNode [{node :node} w] (print-method (n/string node) w))
+;(remove-method print-method PrintableNode)
+
+;; pprint prints the map which is verbose and hard to read
+;; use the use the print-method defined by rewrite-clj instead
+;; which would be the default simple-dispatch if node wasn't also a map
+(defmethod pprint/simple-dispatch PrintableNode [{node :node}] (pr node))
+;(remove-method pprint/simple-dispatch PrintableNode)
+
+;;todo override calva pprint?
+;; after bit more research discoverd I can toggle calva pprint on and off
+
+(defn ppatch [& args] (->PrintableNode (apply patch args)))
 (comment
-  (patch [:a] [:b])
-  (patch [:a :b] [:a])
-  (patch [:a] [:a :b])
-  (patch [:a] [:a :b :c])
+  (ppatch [:a] [:b])
+
+  (ppatch [:a :b] [:a])
+  (ppatch [:a] [:a :b])
+  (ppatch [:a] [:a :b :c])
+
 
 ;;
-  (patch [:a :b] [:b :a])
-    ;;
-  )
+  (ppatch [:a :b] [:b :a])
+  (ppatch nil [])
+  (ppatch [] nil)
+
+  (ppatch #{} #{:a})
+  (ppatch #{:b :c} #{:a})
+
+  ;; failed replacing value in set
+  ;; due to assertion in add-child
+  (ppatch #{:a} #{:b})
+
+  (-> #{:b}
+      (zipper)
+      (focus [:b])
+      (z/sexpr))
+
+
+  :rcf)

@@ -23,6 +23,7 @@
 
 
 (comment
+  (run-test test-focus)
   ;; clojure reader does not preserve ordering
   ;; of elements in sets or maps as they are
   ;; irrelvant to the semantics of the data
@@ -60,8 +61,12 @@
   )
 
 (comment
-  (doseq [{:keys [pre post] :as test} (read-tests)]
-    (assert (= (n/sexpr post) (n/sexpr (:anode (patch (n/coerce pre) (n/coerce post)))))
+  (let [{:keys [pre post] :as test} (first (read-tests))]
+    (pr pre post))
+
+  (doseq [{:keys [pre post] :as test} (drop 42 (read-tests))]
+    (pr pre post)
+    (assert (= (n/sexpr post) (n/sexpr (patch (n/coerce pre) (n/coerce post))))
             (pr test))))
 
 #_(deftest test-patch-sexpr

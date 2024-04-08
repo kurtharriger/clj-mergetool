@@ -1,4 +1,4 @@
-(ns kurtharriger.clj-mergetool.reader-conditional-test
+(ns known-issues.reader-conditional-test
   (:require
    [clojure.pprint :as pprint]
    [clojure.test :refer :all]
