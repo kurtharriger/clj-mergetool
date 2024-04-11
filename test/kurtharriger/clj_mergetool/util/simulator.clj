@@ -76,9 +76,9 @@
         (delete! repo)))))
 
 (defn example [n]
-  {:base  (slurp (str "test/kurtharriger/examples/ex" n "/base.clj"))
-   :left  (slurp (str "test/kurtharriger/examples/ex" n "/left.clj"))
-   :right (slurp (str "test/kurtharriger/examples/ex" n "/right.clj"))})
+  {:base  (slurp (str "test-resources/examples/ex" n "/base.clj"))
+   :left  (slurp (str "test-resources/examples/ex" n "/left.clj"))
+   :right (slurp (str "test-resources/examples/ex" n "/right.clj"))})
 
 (defn merge-result-example [n]
   (let [{:keys [base left right]} (example n)]
@@ -99,7 +99,7 @@
   ;; but git :1:example.clj :2:example.clj :3:example.clj is probably
   ;; the best way to use the tool as needed in a repo
   (for [i (range 1 4)
-        :let [conflict-file (str "test/kurtharriger/examples/ex" i "/conflict.clj")]]
+        :let [conflict-file (str "test-resources/examples/ex" i "/conflict.clj")]]
 
     (spit conflict-file (:content (merge-result-example i))))
 

@@ -167,7 +167,10 @@
 
 
 (defn diff
-  "Creates an editscript over and containing rewrite-clj nodes"
+  "Creates an editscript over and containing rewrite-clj nodes.
+   The values within the editscript are replaced with the source nodes from the right document so that whitespace within those nodes is preserved.
+   There is still issue preserving leading whitespace on inserted/replaced nodes.
+   This will likely be added as metadata or custom node for processing after patching as inserting more than one node into target document during patching would require repositioning of future edits."
   [left right]
   (let [left (n/coerce left)
         right (n/coerce right)

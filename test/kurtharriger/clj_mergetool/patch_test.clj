@@ -84,3 +84,76 @@
   (deftest test-patch-str
     (doseq [{:keys [pre post] :as test} (read-tests)]
       (is  (= (n/string post) (n/string (patch (zipper pre) (editscript test))))))))
+
+
+(comment
+  (-> (p/parse-file-all "test-resources/examples/ex3/right.clj")
+      (z/of-node {:track-position? true})
+      (z/down)
+      (z/right)
+      (z/down)
+      (z/right)
+      (z/right)
+      (z/right)
+      (z/right)
+      (z/right)
+      (z/node)
+      (n/string))
+
+  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
+        right (p/parse-file-all "test-resources/examples/ex3/right.clj")]
+    (-> (diff base right)
+        (e/get-edits)
+        (first)
+        (last)
+        (n/string)))
+
+  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
+        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
+        editscript (diff base right)]
+    (-> (patch base editscript)
+        (n/string)
+        (println)))
+
+  ;;TODO;
+  ;; whitespace within the inserted/replaced nodes is now preserved but the leading whitespace is not captured
+  ;; on clj-http key or value.
+  ;; possibly can find the node in source document and traverse backward to grab any leading whitespace
+  ;; this may need to be done after applying the editscript because inserting more than one node into target
+  ;; document during insert would offset future edit positons.  Potentially can place on the node metadata
+  ;; and walk document after patching
+  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
+        left (p/parse-file-all "test-resources/examples/ex3/right.clj")
+        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
+        editscript (e/combine (diff base left) (diff base right))]
+    (-> (patch base editscript)
+        (n/string)
+        (println)))
+; {:deps {org.clojure/clojure {:mvn/version "1.10.1"}
+;         org.clojure/core.async {:mvn/version "1.3.610"} clj-http {:mvn/version
+;          "3.11.0"} clj-http {:mvn/version
+;          "3.11.0"}}}
+;
+  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
+        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
+        rnodes (tree-seq n/inner? n/children right)
+        rindex (into {} (map vector rnodes (range)))
+        get-whitespace (fn [node]
+                         (when-let [pos (rindex node)]
+                           (->> (take pos rnodes)
+                                (reverse)
+                                (take-while n/whitespace-or-comment?)
+                                (reverse)
+                                (vec))))
+        add-leading-metadata (fn [edit]
+                               (when-let [node (nth edit 2 nil)]
+                                 (with-meta node {:leading-whitespace (get-whitespace node)})))
+        editscript (diff base right)
+        edits (e/get-edits editscript)]
+    (->> (map add-leading-metadata edits)
+         (map meta)))
+
+
+
+
+  :rcf)

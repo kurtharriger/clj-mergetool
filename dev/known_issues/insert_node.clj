@@ -64,3 +64,7 @@
 
 ;; so far the editscript path does match the right document
 ;; even after replace so maybe it will work to pull source
+
+;; this issue is now mostly fixed by updated edit script with the source nodes
+;; so that whitespace within those nodes is preserved.  There is sitll issue
+;; preserving leading whitespace on inserted/replaced nodes
