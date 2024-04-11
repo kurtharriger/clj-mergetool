@@ -105,8 +105,18 @@
 
 
 (let [a [:a :b]
-      b [:a :b :c]
-      c [:a :b :d :e]
+      b [:a :c]
+      c [[:a] :b]
+      expected [:b :c :d]
       bscript (e/diff a b)
+      cscript (e/diff a c)
+      fullscript (e/combine bscript cscript)
       e (edit-tree-with-source (e/get-edits bscript) (wrap-zipper (z/of-node (n/coerce b))))]
-  e)
+  [:a a
+   :b b
+   :c c
+   :bscript bscript
+   :cscript cscript
+   :fullscript fullscript
+   :e e
+   :r   (e/patch a fullscript)])

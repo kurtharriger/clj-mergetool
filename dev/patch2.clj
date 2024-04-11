@@ -5,7 +5,10 @@
             [rewrite-clj.parser :as p]
             [editscript.core :as e]
             [meander.epsilon :as m]
-            [clojure.test :refer [deftest is are run-test]]))
+            [clojure.test :refer [deftest is are run-test]]
+            [clojure.test.check.generators :as gen]
+            [clojure.test.check.properties :as prop]
+            [clojure.test.check.clojure-test :as ct]))
 
 (defn zipper
   "Coerce provided value into rewrite-clj zipper.
@@ -246,6 +249,31 @@
       (zipper)
       (focus [:b])
       (z/sexpr))
+
+;; too random editsript just replaces entire seq
+  ;; (gen/sample (gen/vector gen/any))
+  ;; (do
+  ;;   (ct/defspec test-random-patch
+  ;;     (prop/for-all
+  ;;      [a (gen/vector gen/any)
+  ;;       b (gen/vector gen/any)]
+
+  ;;      (= b (n/sexpr (patch a b)))))
+
+  ;;   (run-test test-random-patch))
+
+  (let [left (vec (range 0 10))
+        m (gen/sample (gen/let    [s (gen/choose 3 9)] (gen/choose 0 s)))
+        right (reduce (fn [v i] (update v i inc)) left m)]
+    ['l left 'r right 'd (e/diff left right)])
+  (let [l [0 1 2 3 4 5 6 7 8 9]
+        r [0 4 5 4 5 6 7 7 8 9]
+        d [[[1] :-] [[1] :-] [[1] :-] [[3] :+ 4] [[4] :+ 5] [[7] :+ 7]]]
+    (ppatch l r))
+
+
+;      [l [0 1 2 3 4 5 6 7 8 9] r [2 5 4 3 5 5 7 7 8 9] d [[[0] :-] [[0] :-] [[1] :r 5] [[3] :+ 3] [[5] :r 5] [[7] :+ 7]]]
+
 
 
   :rcf)

@@ -135,7 +135,7 @@
       (z/append-child value)))
 
 (defmethod add-child :set [zipper key value]
-  (assert (= key value))
+  ;(assert (= key value))
   (-> zipper
       (z/append-child value)))
 
@@ -163,4 +163,27 @@
   "Applies an editscript patch to rewrite-clj node."
   [node editscript]
   (z/root (reduce patch* (zipper node) (e/get-edits editscript))))
+
+
+
+(defn diff
+  "Creates an editscript over and containing rewrite-clj nodes"
+  [left right]
+  (let [left (n/coerce left)
+        right (n/coerce right)
+        rzip (zipper right)
+        editscript (e/diff (n/sexpr left) (n/sexpr right))
+        edits (e/get-edits editscript)]
+    edits
+    (-> (for [edit edits]
+          (m/match edit
+            [?path :r ?value] (let [rnode (z/node (focus rzip ?path))]
+                                (assert (= (n/sexpr rnode) ?value) (str "expected " ?value " got " (n/sexpr rnode)))
+                                [?path :r rnode])
+            [?path :+ ?value] (let [rnode (z/node (focus rzip ?path))]
+                                (assert (= (n/sexpr rnode) ?value) (str "expected " ?value " got " (n/sexpr rnode)))
+                                [?path :+ rnode])
+            ?other ?other))
+        vec
+        e/edits->script)))
 

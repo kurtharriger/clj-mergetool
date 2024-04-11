@@ -37,7 +37,7 @@
 (defn diff
   [ctx]
   (let [base (some-> ctx :base :parsed n/sexpr)
-        mkdiff (partial e/diff base)
+        mkdiff (partial patch/diff base)
         editscripts (->> (map #(some-> ctx % :parsed n/sexpr mkdiff) [:left :right])
                          (filter (complement nil?))
                          (seq))

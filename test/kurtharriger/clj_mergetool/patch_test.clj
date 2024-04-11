@@ -6,7 +6,7 @@
    [rewrite-clj.zip :as z]
    [clojure.test :refer :all]
    [kurtharriger.clj-mergetool.patch :refer
-    [focus zipper patch]]))
+    [focus zipper patch diff]]))
 
 (deftest test-focus
   (are [node path f v] (= (f (focus (zipper node) path)) v)
@@ -50,7 +50,7 @@
         (mapv #(apply ->TestCase %)))))
 
 (defn editscript [{:keys [pre post] :as test-case}]
-  (e/diff (n/sexpr pre) (n/sexpr post)))
+  (diff (n/sexpr pre) (n/sexpr post)))
 
 (comment
   (clojure.pprint/print-table
@@ -59,6 +59,19 @@
   ;
   )
 
+(comment
+  (clojure.pprint/print-table
+   (for [{:keys [pre post] :as test} (read-tests)
+         :let [editscript  (try (editscript test) (catch Exception e))
+               patched (try (patch  pre editscript) (catch Exception e))]]
+     {:pre pre
+      :post post
+      :editscript (e/get-edits editscript)
+      :patched patched
+      :equal? (= (n/string patched) (n/string post))
+      :sexpr=? (= (n/sexpr patched) (n/sexpr post))}))
+
+  :rcf)
 
 (deftest test-patch-sexpr
   (doseq [{:keys [pre post] :as test} (read-tests)]

@@ -5,7 +5,8 @@
         rewrite-clj/rewrite-clj {:mvn/version "1.1.47"}
         juji/editscript         {:mvn/version "0.6.3"}
         meander/epsilon         {:mvn/version "0.0.650"}
-        org.babashka/cli        {:mvn/version "0.8.57"}}
+        org.babashka/cli        {:mvn/version "0.8.57"}
+        org.clojure/tools.trace {:mvn/version "0.8.0"}}
  :aliases
  {:dev {:extra-paths ["dev"]}
   :run {:main-opts ["-m" "kurtharriger.clj-mergetool"]}
