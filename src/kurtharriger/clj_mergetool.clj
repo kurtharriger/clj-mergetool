@@ -70,13 +70,13 @@
   (cond
     (= op :diff)
     (do
-      (when diff (pprint diff))
+      (when diff (prn diff))
       (assoc ctx :exit-code 0))
 
     (and (= op :merge) conflicts)
     (do
     ;; todo write merged with conflicts
-      (when conflicts (pprint conflicts))
+      (when conflicts (prn conflicts))
       (assoc ctx :exit-code 1))
 
     (= op :merge)
@@ -139,7 +139,7 @@
  ;;
   )
 
-(defn remerge [{{files :files} :opts dir :dir}]
+(defn remerge [{{files :files dir :dir} :opts}]
   (let [results (->> (apply load-from-index {:dir dir} files)
                      (map #(assoc % :op :merge))
                      (map diff)
@@ -150,7 +150,7 @@
      :results results}))
 
 
-(defn show-diff [{{files :files} :opts dir :dir}]
+(defn show-diff [{{files :files dir :dir} :opts}]
   (let [results (->> (apply load-from-index {:dir dir} files)
                      (map #(assoc % :op :diff))
                      (map diff)

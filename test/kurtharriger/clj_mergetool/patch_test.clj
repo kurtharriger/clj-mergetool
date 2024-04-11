@@ -91,11 +91,10 @@
 
 (comment
   (-> (p/parse-file-all "test-resources/examples/ex3/right.clj")
-      (z/of-node {:track-position? true})
+      (z/of-node)
       (z/down)
       (z/right)
       (z/down)
-      (z/right)
       (z/right)
       (z/right)
       (z/right)
@@ -118,103 +117,5 @@
         (n/string)
         (println)))
 
-  ;;TODO;
-  ;; whitespace within the inserted/replaced nodes is now preserved but the leading whitespace is not captured
-  ;; on clj-http key or value.
-  ;; possibly can find the node in source document and traverse backward to grab any leading whitespace
-  ;; this may need to be done after applying the editscript because inserting more than one node into target
-  ;; document during insert would offset future edit positons.  Potentially can place on the node metadata
-  ;; and walk document after patching
-  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
-        left (p/parse-file-all "test-resources/examples/ex3/left.clj")
-        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
-        editscript (e/combine (diff base left) (diff base right))]
-    (-> (patch base editscript)
-        (n/string)
-        (println)))
-; {:deps {org.clojure/clojure {:mvn/version "1.10.1"}
-;         org.clojure/core.async {:mvn/version "1.3.610"} clj-http {:mvn/version
-;          "3.11.0"} clj-http {:mvn/version
-;          "3.11.0"}}}
-;
-  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
-        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
-        editscript (diff base right)
-        edits (e/get-edits editscript)]
-    (->>  (map #(nth % 2 nil) edits)
-          (map meta)
-          (map ::patch/leading-whitespace)))
 
-;; a bit of a hack but could add a virtual node
-  (defrecord ExpandLeadingWhitespaceNode [node]
-    nodep/Node
-    (string [_]
-      (let [lw (mapv n/string (::patch/leading-whitespace (meta node)))]
-        (println lw)
-        (string/join "" (conj lw  (n/string node)))))
-    Object
-    (toString [_]
-      (nodep/string node)))
-
-  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
-        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
-        editscript (diff base right)
-        patched (patch base editscript)
-        lwpatched (walk/postwalk (fn [node]
-                                   (if-let [lw (::patch/leading-whitespace (meta node))]
-                                     (->ExpandLeadingWhitespaceNode node)
-                                     node))
-                                 patched)]
-    #_(->> (tree-seq n/inner? n/children patched)
-           (map (comp ::patch/leading-whitespace meta)))
-    #_(->> (tree-seq n/inner? n/children lwpatched)
-           (filter (partial instance? ExpandLeadingWhitespaceNode))
-           (first)
-           (n/string))
-    (-> lwpatched
-        n/string
-        println))
-
-;; almost works but not sure how to splice in a list of nodes
-  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
-        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
-        editscript (diff base right)
-        patched (patch base editscript)
-        lwpatched (walk/prewalk (fn [node]
-                                  (if-let [lw (::patch/leading-whitespace (meta node))]
-                                    (conj lw (vary-meta node dissoc ::patch/leading-whitespace))
-                                    node))
-                                patched)]
-    lwpatched)
-
-  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
-        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
-        editscript (diff base right)
-        patched (patch base editscript)
-        lwpatched (walk/postwalk (fn [node]
-                                   (if (and (n/node? node) (n/inner? node))
-                                     (n/replace-children
-                                      node
-                                      (mapcat (fn [node]
-                                                (if-let [lw (::patch/leading-whitespace (meta node))]
-                                                  (conj lw node)
-                                                  [node])) (n/children node)))
-                                     node))
-                                 patched)]
-    lwpatched)
-
-  (defn expand-leading-whitespace-meta [root-node]
-    (walk/postwalk (fn [node]
-                     (if (and (n/node? node) (n/inner? node))
-                       (n/replace-children
-                        node
-                        (mapcat (fn [node]
-                                  (if-let [lw (::patch/leading-whitespace (meta node))]
-                                    (conj lw node)
-                                    [node])) (n/children node)))
-                       node))
-                   root-node)
-
-
-
-    :rcf))
+  :rcf)
