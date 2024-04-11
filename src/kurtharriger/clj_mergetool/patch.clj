@@ -1,5 +1,6 @@
 (ns kurtharriger.clj-mergetool.patch
-  (:require [rewrite-clj.zip :as z]
+  (:require [clojure.walk :as walk]
+            [rewrite-clj.zip :as z]
             [rewrite-clj.node :as n]
             [rewrite-clj.parser :as p]
             [editscript.core :as e]
@@ -90,7 +91,7 @@
 (defmulti remove-child (fn [zipper key] (z/tag zipper)))
 
 (comment
-  ;; note: the only operation expected at the root is replace (:r)
+  ;; note: the only operatiGon expected at the root is replace (:r)
   ;; if the root is a set, map or vector the editscript
   ;; the editscript to add or remove would include the key
   ;; or index as last node in path which is a bit unintuitive
@@ -159,34 +160,75 @@
       (focus [key])
       (z/remove)))
 
-(defn patch
-  "Applies an editscript patch to rewrite-clj node."
-  [node editscript]
-  (z/root (reduce patch* (zipper node) (e/get-edits editscript))))
+
+(defn reverse-from
+  "lazily traverse vector in reverse from specified index"
+  [coll pos]
+  {:pre (vector? coll)}
+  (map (partial nth coll) (range (dec pos) -1 -1) coll))
+
+(comment
+  (->> (range 30) (take 25) (reverse))
+  (->> (reverse-from (range 30) 25))
+  :rcf)
 
 
+(defn make-add-leading-metadata
+  "Given a node returns a function that when provided a node "
+  [root-node]
+  (let [rnodes (vec (tree-seq n/inner? n/children root-node))
+        rindex (into {} (map vector rnodes (range)))]
+    (fn [node]
+      (when-let [pos (rindex node)]
+        (vary-meta node assoc ::leading-whitespace
+                   (->> (reverse-from rnodes pos)
+                        (take-while n/whitespace-or-comment?)
+                        (reverse)
+                        (vec)))))))
 
 (defn diff
   "Creates an editscript over and containing rewrite-clj nodes.
    The values within the editscript are replaced with the source nodes from the right document so that whitespace within those nodes is preserved.
-   There is still issue preserving leading whitespace on inserted/replaced nodes.
-   This will likely be added as metadata or custom node for processing after patching as inserting more than one node into target document during patching would require repositioning of future edits."
+   Leading whitespace for the node is stored on ::leading-whitespace meta property for use post patching.
+   "
   [left right]
   (let [left (n/coerce left)
         right (n/coerce right)
+        add-leading-metadata (make-add-leading-metadata right)
         rzip (zipper right)
         editscript (e/diff (n/sexpr left) (n/sexpr right))
         edits (e/get-edits editscript)]
     edits
     (-> (for [edit edits]
           (m/match edit
-            [?path :r ?value] (let [rnode (z/node (focus rzip ?path))]
+            [?path :r ?value] (let [rnode (add-leading-metadata (z/node (focus rzip ?path)))]
                                 (assert (= (n/sexpr rnode) ?value) (str "expected " ?value " got " (n/sexpr rnode)))
                                 [?path :r rnode])
-            [?path :+ ?value] (let [rnode (z/node (focus rzip ?path))]
+            [?path :+ ?value] (let [rnode (add-leading-metadata (z/node (focus rzip ?path)))]
                                 (assert (= (n/sexpr rnode) ?value) (str "expected " ?value " got " (n/sexpr rnode)))
                                 [?path :+ rnode])
             ?other ?other))
         vec
         e/edits->script)))
 
+
+(defn expand-leading-whitespace-meta
+  "Inserts leading whitespace "
+  [root-node]
+  (walk/postwalk (fn [node]
+                   (if (and (n/node? node) (n/inner? node))
+                     (n/replace-children
+                      node
+                      (mapcat (fn [node]
+                                (if-let [lw (::leading-whitespace (meta node))]
+                                  (conj lw node)
+                                  [node])) (n/children node)))
+                     node))
+                 root-node))
+
+(defn patch
+  "Applies an editscript patch to rewrite-clj node."
+  [node editscript]
+  (-> (reduce patch* (zipper node) (e/get-edits editscript))
+      (z/root)
+      (expand-leading-whitespace-meta)))

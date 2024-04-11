@@ -1,12 +1,15 @@
 (ns kurtharriger.clj-mergetool.patch-test
   (:require
+   [clojure.string :as string]
+   [clojure.walk :as walk]
    [editscript.core :as e]
    [rewrite-clj.node :as n]
+   [rewrite-clj.node.protocols :as nodep]
    [rewrite-clj.parser :as p]
    [rewrite-clj.zip :as z]
    [clojure.test :refer :all]
-   [kurtharriger.clj-mergetool.patch :refer
-    [focus zipper patch diff]]))
+   [kurtharriger.clj-mergetool.patch :as patch :refer [focus zipper patch diff]]
+   [rewrite-clj.node.protocols :as node]))
 
 (deftest test-focus
   (are [node path f v] (= (f (focus (zipper node) path)) v)
@@ -123,7 +126,7 @@
   ;; document during insert would offset future edit positons.  Potentially can place on the node metadata
   ;; and walk document after patching
   (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
-        left (p/parse-file-all "test-resources/examples/ex3/right.clj")
+        left (p/parse-file-all "test-resources/examples/ex3/left.clj")
         right (p/parse-file-all "test-resources/examples/ex3/right.clj")
         editscript (e/combine (diff base left) (diff base right))]
     (-> (patch base editscript)
@@ -136,24 +139,82 @@
 ;
   (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
         right (p/parse-file-all "test-resources/examples/ex3/right.clj")
-        rnodes (tree-seq n/inner? n/children right)
-        rindex (into {} (map vector rnodes (range)))
-        get-whitespace (fn [node]
-                         (when-let [pos (rindex node)]
-                           (->> (take pos rnodes)
-                                (reverse)
-                                (take-while n/whitespace-or-comment?)
-                                (reverse)
-                                (vec))))
-        add-leading-metadata (fn [edit]
-                               (when-let [node (nth edit 2 nil)]
-                                 (with-meta node {:leading-whitespace (get-whitespace node)})))
         editscript (diff base right)
         edits (e/get-edits editscript)]
-    (->> (map add-leading-metadata edits)
-         (map meta)))
+    (->>  (map #(nth % 2 nil) edits)
+          (map meta)
+          (map ::patch/leading-whitespace)))
+
+;; a bit of a hack but could add a virtual node
+  (defrecord ExpandLeadingWhitespaceNode [node]
+    nodep/Node
+    (string [_]
+      (let [lw (mapv n/string (::patch/leading-whitespace (meta node)))]
+        (println lw)
+        (string/join "" (conj lw  (n/string node)))))
+    Object
+    (toString [_]
+      (nodep/string node)))
+
+  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
+        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
+        editscript (diff base right)
+        patched (patch base editscript)
+        lwpatched (walk/postwalk (fn [node]
+                                   (if-let [lw (::patch/leading-whitespace (meta node))]
+                                     (->ExpandLeadingWhitespaceNode node)
+                                     node))
+                                 patched)]
+    #_(->> (tree-seq n/inner? n/children patched)
+           (map (comp ::patch/leading-whitespace meta)))
+    #_(->> (tree-seq n/inner? n/children lwpatched)
+           (filter (partial instance? ExpandLeadingWhitespaceNode))
+           (first)
+           (n/string))
+    (-> lwpatched
+        n/string
+        println))
+
+;; almost works but not sure how to splice in a list of nodes
+  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
+        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
+        editscript (diff base right)
+        patched (patch base editscript)
+        lwpatched (walk/prewalk (fn [node]
+                                  (if-let [lw (::patch/leading-whitespace (meta node))]
+                                    (conj lw (vary-meta node dissoc ::patch/leading-whitespace))
+                                    node))
+                                patched)]
+    lwpatched)
+
+  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
+        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
+        editscript (diff base right)
+        patched (patch base editscript)
+        lwpatched (walk/postwalk (fn [node]
+                                   (if (and (n/node? node) (n/inner? node))
+                                     (n/replace-children
+                                      node
+                                      (mapcat (fn [node]
+                                                (if-let [lw (::patch/leading-whitespace (meta node))]
+                                                  (conj lw node)
+                                                  [node])) (n/children node)))
+                                     node))
+                                 patched)]
+    lwpatched)
+
+  (defn expand-leading-whitespace-meta [root-node]
+    (walk/postwalk (fn [node]
+                     (if (and (n/node? node) (n/inner? node))
+                       (n/replace-children
+                        node
+                        (mapcat (fn [node]
+                                  (if-let [lw (::patch/leading-whitespace (meta node))]
+                                    (conj lw node)
+                                    [node])) (n/children node)))
+                       node))
+                   root-node)
 
 
 
-
-  :rcf)
+    :rcf))

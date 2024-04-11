@@ -5,6 +5,7 @@
             [rewrite-clj.node :as n]
             [rewrite-clj.parser :as p]
             [editscript.core :as e]
+            [meander.epsilon :as m]
             [babashka.cli :as cli]
             [babashka.fs :as fs]
             [babashka.process :refer [sh check]]
@@ -38,7 +39,7 @@
   [ctx]
   (let [base (some-> ctx :base :parsed n/sexpr)
         mkdiff (partial patch/diff base)
-        editscripts (->> (map #(some-> ctx % :parsed n/sexpr mkdiff) [:left :right])
+        editscripts (->> (map #(some-> ctx % :parsed mkdiff) [:left :right])
                          (filter (complement nil?))
                          (seq))
         editscript (when editscripts (reduce e/combine editscripts))
@@ -144,7 +145,18 @@
                      (map diff)
                      (map patch)
                      (map output))
-        exit-code (apply max (map :exit-code results))]
+        exit-code (if (not-empty results) (apply max (map :exit-code results)) 0)]
+    {:exit-code exit-code
+     :results results}))
+
+
+(defn show-diff [{{files :files} :opts dir :dir}]
+  (let [results (->> (apply load-from-index {:dir dir} files)
+                     (map #(assoc % :op :diff))
+                     (map diff)
+                     (map patch)
+                     (map output))
+        exit-code (if (not-empty results) (apply max (map :exit-code results)) 0)]
     {:exit-code exit-code
      :results results}))
 
@@ -162,10 +174,16 @@
 
 (defn -main [& args]
   (let [result (cli/dispatch
-                [{:cmds ["git" "mergetool"] :fn #'mergetool :spec {:output {:default :overwrite}} :args->opts [:ancestor :current :other]}
-                 {:cmds ["git" "remerge"] :fn #'remerge :spec {:files {:coerce []}} :args->opts [:files]}
+                [{:cmds ["mergetool"] :fn #'mergetool :spec {:output {:default :overwrite}} :args->opts [:ancestor :current :other]}
+                 {:cmds ["remerge"] :fn #'remerge :spec {:files {:coerce []}} :args->opts [:files]}
+                 {:cmds ["diff"] :fn #'show-diff :spec {:files {:coerce []}} :args->opts [:files]}
                  {:cmds [] :fn #'help}] args)]
     (when-let [ec (:exit-code result)]
-      (System/exit ec))))
+      (System/exit ec)))
 
 
+
+
+
+
+  :rcf)
