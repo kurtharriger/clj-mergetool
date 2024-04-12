@@ -99,7 +99,7 @@
         release-version (str major "." minor "." patch)
         release-date (format "%tF" (System/currentTimeMillis))
         release-header (str "## [" release-version "] - " release-date)
-        next-version-header (str "## [" major "." (inc (parse-long minor)) "." patch "] - " release-date)
+        next-version-header (str "## " major "." (inc (parse-long minor)) ".0 - [Unreleased]")
 
         release-link (-> unreleased-link
                          (string/replace "Unreleased" release-version)
@@ -113,7 +113,8 @@
     (spit changelog-path updated-changelog)
     (shell "git" "add" "resources/VERSION" "CHANGELOG.md")
     (shell "git" "commit" "-m" (str "Release " release-version "\n\n" changes))
-    (shell "git" "tag" release-version)))
+    (shell "git" "tag" release-version))
+  nil)
 
 (comment
   (release-version {})

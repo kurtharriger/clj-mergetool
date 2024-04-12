@@ -1,8 +1,9 @@
 # Change Log
 
-## [0.2.0] - 2024-04-12
+## 0.2.0 - [Unreleased]
 
-...
+Add install tool
+Update readme with installation and usage instructions
 
 ## [0.1.0] - 2024-04-12
 

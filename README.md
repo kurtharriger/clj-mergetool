@@ -88,8 +88,6 @@ sdk use java 22-graal
 clj -T:build install
 ```
 
-Alternatively, add :link true for development
-
 # Usage
 
 When you encounter a git conflict you can invoke this tool to attempt to automatically resolve the conflicts.
