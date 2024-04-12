@@ -1,8 +1,8 @@
 # Change Log
 
-## 0.3.0 - [Unreleased]
+## 0.2.1 - [Unreleased]
 
-...
+Update readme instructions
 
 ## [0.2.0] - 2024-04-12
 
