@@ -131,12 +131,15 @@
   (b/delete {:path "target"})
   (let [opts (uber-opts opts)
         uber-file (:uber-file opts)
-        resource-config-path (fs/file class-dir "META-INF" "kurtharriger" "clj-mergetool")]
+        ; unable to read VERSION file via io/resource in the native image
+        ; tried adding resources-config.json but doesn't seem to work
+        ; so embeeded version in source with macro instead and commented this out
+        ;resource-config-path (fs/file class-dir "META-INF" "kurtharriger" "clj-mergetool")
+        ]
+
+    (println "Buidling version " (slurp "resources/VERSION"))
     (println "\nCopying source...")
     (b/copy-dir {:src-dirs ["resources" "src"] :target-dir class-dir})
-    ; unable to read VERSION file via io/resource in the native image
-    ; tried adding resources-config.json but doesn't seem to work
-    ; so embeeded version in source with macro instead and commented this out
     ;; (fs/create-dirs resource-config-path)
     ;; (fs/copy (fs/file "resources-config.json") resource-config-path)
     (println (str "\nCompiling " main "..."))
@@ -149,10 +152,6 @@
       (make-executable-jar uber-file (:binary opts))))
   opts)
 
-(defn ci "Run the CI pipeline of tests (and build the uberjar)." [opts]
-  (test opts)
-  (release-version opts)
-  (build opts))
 
 (defn install
   "Link clj-mergetool to ~/.local/bin"
@@ -166,4 +165,8 @@
       (let [{:keys [binary]} (build opts)]
         (fs/copy binary bin-path)))))
 
-
+(defn ci "Run the CI pipeline of tests (and build the uberjar)." [opts]
+  (test opts)
+  (release-version opts)
+  (build opts)
+  (install opts))
