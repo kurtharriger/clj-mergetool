@@ -11,7 +11,9 @@
  {:dev {:extra-paths ["dev"]}
   :run {:main-opts ["-m" "kurtharriger.clj-mergetool"]}
   :diff {:main-opts ["-m" "kurtharriger.clj-mergetool" "diff"]}
-  :build {:deps {io.github.clojure/tools.build {:mvn/version "0.9.4"}}
+  :build {:deps {io.github.clojure/tools.build {:mvn/version "0.9.4"}
+                 babashka/process        {:mvn/version "0.5.22"}
+                 babashka/fs             {:mvn/version "0.5.20"}}
           :ns-default build}
   :test {:extra-paths ["test"]
          :extra-deps {org.clojure/test.check               {:mvn/version "1.1.1"}

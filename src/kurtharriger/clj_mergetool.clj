@@ -8,6 +8,7 @@
             [meander.epsilon :as m]
             [babashka.cli :as cli]
             [babashka.fs :as fs]
+            [clojure.java.io :as io]
             [babashka.process :refer [sh check]]
             [kurtharriger.clj-mergetool.patch :as patch])
   (:gen-class))
@@ -170,13 +171,17 @@
   )
 
 (defn help [dispatch-args]
-  (println "Usage: clj-mergetool git remerge [filename ...]"))
+  (println "Usage: clj-mergetool remerge [filename ...]"))
+
+(defn show-version [_]
+  (println (slurp (io/resource "VERSION"))))
 
 (defn -main [& args]
   (let [result (cli/dispatch
                 [{:cmds ["mergetool"] :fn #'mergetool :spec {:output {:default :overwrite}} :args->opts [:ancestor :current :other]}
                  {:cmds ["remerge"] :fn #'remerge :spec {:files {:coerce []}} :args->opts [:files]}
                  {:cmds ["diff"] :fn #'show-diff :spec {:files {:coerce []}} :args->opts [:files]}
+                 {:cmds ["version"] :fn #'show-version}
                  {:cmds [] :fn #'help}] args)]
     (when-let [ec (:exit-code result)]
       (System/exit ec)))
