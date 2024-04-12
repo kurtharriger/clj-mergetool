@@ -4,7 +4,8 @@
             [clojure.tools.build.api :as b]
             [clojure.string :as string]
             [clojure.java.io :as io]
-            [babashka.process :refer [shell]]))
+            [babashka.fs :as fs]
+            [babashka.process :refer [shell sh]]))
 
 (def lib 'net.clojars.kurtharriger/kurtharriger.clj-mergetool)
 (def main 'kurtharriger.clj-mergetool)
@@ -23,25 +24,39 @@
     (when-not (zero? exit) (throw (ex-info "Tests failed" {}))))
   opts)
 
+
+(defn can-build-native-image? []
+  (= 0 (:exit (sh "which" "native-image"))))
+
+(comment
+  (:out (sh {:out :string} "which" "native-image"))
+  (can-build-native-image?)
+
+  :rcf)
+
 (defn- uber-opts [opts]
-  (assoc opts
-         :lib lib :main main
-         :uber-file (format "target/%s-%s.jar" lib (slurp "resources/VERSION"))
-         :basis (b/create-basis {})
-         :class-dir class-dir
-         :src-dirs ["src"]
-         :ns-compile [main]))
+  (cond->
+   (assoc opts
+          :lib lib :main main
+          :uber-file (format "target/%s.jar" lib)
+          :basis (b/create-basis {})
+          :class-dir class-dir
+          :src-dirs ["src"]
+          :ns-compile [main]
+          :binary "target/clj-mergetool")))
 
 (defn native-image [opts]
-  (println opts)
+  (when-not (can-build-native-image?)
+    (println "native-image not found. Verify GraalVM is installed and on the PATH.")
+    (System/exit 1))
   (println "Compiling to native image with GraalVM...")
-  (let [{jar-path :uber-file} (uber-opts opts)]
-    (let [bin-path (str "target/clj-mergetool")]
-      (shell "native-image"
-             "--no-fallback"
-             "--initialize-at-build-time"
-             "-jar" jar-path
-             "-H:Name=" bin-path))))
+  (let [{jar-path :uber-file bin-path :binary} (uber-opts opts)]
+    (shell "native-image"
+           "--no-fallback"
+           "--initialize-at-build-time"
+           "-jar" jar-path
+           "-H:+UnlockExperimentalVMOptions"
+           "-H:Name=" bin-path)))
 
 (defn extract-change-notes [changelog unreleased-header]
   (->> (string/split-lines changelog)
@@ -57,7 +72,7 @@
 
 (defn working-copy-dirty? [& files]
   (let [status (:out (apply shell {:out :string} "git" "status" "--porcelain" files))]
-    (not (empty? status))))
+    (boolean (seq status))))
 
 (comment
   (working-copy-dirty? "CHANGELOG.md"))
@@ -105,14 +120,49 @@
 
   :rcf)
 
-(defn ci "Run the CI pipeline of tests (and build the uberjar)." [opts]
-  (test opts)
+(defn make-executable-jar [jar out]
+  (with-open [o (io/output-stream out)]
+    (io/copy "#!/usr/bin/env java -jar\n" o)
+    (io/copy (io/file jar) o))
+  (shell "chmod" "+x" out))
+
+(defn build [opts]
   (b/delete {:path "target"})
-  (release-version opts)
-  (let [opts (uber-opts opts)]
+  (let [opts (uber-opts opts)
+        uber-file (:uber-file opts)
+        resource-config-path (fs/file class-dir "META-INF" "kurtharriger" "clj-mergetool")]
     (println "\nCopying source...")
     (b/copy-dir {:src-dirs ["resources" "src"] :target-dir class-dir})
+    ; unable to read VERSION file via io/resource in the native image
+    ; tried adding resources-config.json but doesn't seem to work
+    ; so embeeded version in source with macro instead and commented this out
+    ;; (fs/create-dirs resource-config-path)
+    ;; (fs/copy (fs/file "resources-config.json") resource-config-path)
     (println (str "\nCompiling " main "..."))
     (b/compile-clj opts)
     (println "\nBuilding JAR...")
-    (b/uber opts)))
+    (b/uber opts)
+    (if (can-build-native-image?)
+      (do (println "Building native image...")
+          (native-image opts))
+      (make-executable-jar uber-file (:binary opts))))
+  opts)
+
+(defn ci "Run the CI pipeline of tests (and build the uberjar)." [opts]
+  (test opts)
+  (release-version opts)
+  (build opts))
+
+(defn install
+  "Link clj-mergetool to ~/.local/bin"
+  [{:keys [link] :as opts}]
+  (let [install-dir (fs/file (System/getenv "HOME") ".local" "bin")
+        bin-path (str (fs/file install-dir "clj-mergetool"))
+        opts (uber-opts opts)]
+    (fs/delete-if-exists bin-path)
+    (if link
+      (shell "ln" "-s" (str (fs/file "bin" "clj-mergetool")) bin-path)
+      (let [{:keys [binary]} (build opts)]
+        (fs/copy binary bin-path)))))
+
+

@@ -2,16 +2,6 @@
 
 A git diff and merge tool for edn and clojure code. Semantic diffs for conflict free merges.
 
-# Status
-
-Initial funding for this project provided by [ClojuristsTogether](https://www.clojuriststogether.org/)!
-
-# Share your merge conflicts
-
-I would love to get any example merge conflicts you have encountered in practice on open source code that I can use in my unit tests during development.
-
-Please [open an issue](https://github.com/kurtharriger/clj-mergetool/issues/new) with an example or any other feedback you may have.
-
 # Overview
 
 A git diff and merge tool for edn and clojure code. Semantic diffs for conflict free merges.
@@ -78,19 +68,43 @@ The resulting patch is conflict free:
         clj-http {:mvn/version "3.11.0"}}}
 ```
 
+# Installation
+
+```sh
+git clone  --recurse-submodules --depth 1 https://github.com/kurtharriger/clj-mergetool.git clj-mergetool
+cd clj-mergetool
+clj -T:build install
+```
+
+Note:
+If you have GraalVM installed (when `native-image` is in your PATH), install will attempt to build a native-image instead of an executable jar file which has much faster startup time than running jar file.
+
+I use [sdkman](https://sdkman.io/) to manage multiple versions of java.
+
+```bash
+curl -s "https://get.sdkman.io" | bash
+sdk install java 22-graal
+sdk use java 22-graal
+clj -T:build install
+```
+
+Alternatively, add :link true for development
+
 # Usage
 
-TBD.
-Started March 2024
+When you encounter a git conflict you can invoke this tool to attempt to automatically resolve the conflicts.
+This tool will fetch the ancestor current and other version from the git index and attempt to remerge them.
+If files is not specified all unmerged files in the index will be remerged.
 
-clone repo.
-build uberjar: clj -M:uberdeps
-add bin/clj-mergetool to path
+```sh
+clj-mergetool remerge [files...]
+```
 
-todo: clj-mergetool install
+# Git mergetool
 
-NOTE:
-the merge tool needs to be configured in both .git/config or ~/.gitconfig
+Although not yet recommended, this tool can be automatically invoked by git merge.
+
+The merge tool needs to be configured in both .git/config or ~/.gitconfig
 and .gitattributes or ~/.gitattributes.
 
 .gitattributes is typically added to source control however
@@ -101,54 +115,55 @@ in .gitattributes but not installed in .git/config
 
 ```
 
-git config --local "merge.clj-mergetool.driver" "clj-mergetool merge %O %A %B"
+git config --local "merge.clj-mergetool.driver" "clj-mergetool mergetool %O %A %B"
 
 cat <<END >> .gitattributes
-*.clj merge=clj-mergetool
-*.edn merge=clj-mergetool
+_.clj merge=clj-mergetool
+_.cljs merge=clj-mergetool
+_.edn merge=clj-mergetool
 END
+
 ```
 
-https://github.com/Praqma/git-merge-driver/blob/master/.gitconfig
+See also https://github.com/Praqma/git-merge-driver/blob/master/.gitconfig
 
-# Roadmap:
+# Status
 
-## March 2024
+Initial funding for this project provided by [ClojuristsTogether](https://www.clojuriststogether.org/)!
 
-MVP using editscript and rewrite-clj.
+# Share your merge conflicts
 
-Diff with editscript and apply patch with rewrite-clj to preserve whitespace. This will likely work in many cases where the composed diff is conflict free. However, editscript ignores whitespace and thus new code that is added will need to be reformatted post merge. I expect that actual conflicts to applied where last edit wins.
+I would love to get any example merge conflicts you have encountered in practice on open source code that I can use in my unit tests during development.
 
-At this stage it is probably best to use clj-mergetool as fallback when standard git merge fails.
+Please [open an issue](https://github.com/kurtharriger/clj-mergetool/issues/new) with an example or any other feedback you may have.
 
-## April 2024
+# Known Issues
 
-Fork editscript to work over rewrite-clj nodes to preserve whitespace.
-Potentailly reconsider diff representation.
-Update combine to identify actual conflicts.
+- cljc / reader-literals
 
-## May 2024
+  rewrite-clj currenlty emits reader literals as strings which are somewhat opaque to editscript often resulting in the entire node being replaced.
 
-Run under babashka for performance and cross platform support.
-Usable as primary git mergetool.
+- Leading whitespace and/or comments on map keys not preserved
 
-## June 2024
+- Conflict detection
 
-Better visualization of diffs?
-Even higher level symantic operations?
+- Untested on Windows
 
-- Rename symbol
-- Align forms. Attempt to identify when user aligns values to start at same column.
-- Sorting namespace requires or map keys
-- Replacing multiple let assignments with -> or ->>
-- ... ?
+  Probably works, but assumes linux conventions (eg installs to ~/.local/bin)
+  Let me know if you have [issues](https://github.com/kurtharriger/clj-mergetool/issues/new).
+
+# Roadmap
+
+- fix whitespace/comments on map keys
+- cljc support
+- explore alternative diff representation
+- improve conflict detection
+- simplify installation
+- improve diff visualization
+- explore detection and respresentation of higher order refactorings, such as: rename symbol, align forms, sort keys
 
 ## License
 
 Copyright © 2024 Kurt Harriger
 
 Distributed under the Eclipse Public License version 1.0.
-
-```
-
-```

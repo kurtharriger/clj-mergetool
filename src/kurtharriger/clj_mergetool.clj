@@ -173,8 +173,15 @@
 (defn help [dispatch-args]
   (println "Usage: clj-mergetool remerge [filename ...]"))
 
+
+; In native image (slurp (io/resource "VERSION")) throws
+;  Exception in thread "main" java.lang.IllegalArgumentException: Cannot open <nil> as a Reader.
+; not sure why so pulling version into source at compile time via macro
+(defmacro read-version []
+  (slurp (io/resource "VERSION")))
+
 (defn show-version [_]
-  (println (slurp (io/resource "VERSION"))))
+  (println (read-version)))
 
 (defn -main [& args]
   (let [result (cli/dispatch
