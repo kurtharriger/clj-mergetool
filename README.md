@@ -116,9 +116,9 @@ in .gitattributes but not installed in .git/config
 git config --local "merge.clj-mergetool.driver" "clj-mergetool mergetool %O %A %B"
 
 cat <<END >> .gitattributes
-_.clj merge=clj-mergetool
-_.cljs merge=clj-mergetool
-_.edn merge=clj-mergetool
+*.clj merge=clj-mergetool
+*.cljs merge=clj-mergetool
+*.edn merge=clj-mergetool
 END
 
 ```
