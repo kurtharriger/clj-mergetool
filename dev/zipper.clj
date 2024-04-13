@@ -7,6 +7,9 @@
             [clojure.walk :as walk]
             [clojure.test :refer [deftest is are run-test]]))
 
+;; possibly wrap zipper to better control how it get printed in repl
+;; although discoverd calva has option to enable/disable pretty printting
+;; so maybe wont need
 (defrecord Zipper [zipper])
 
 (defmethod print-method Zipper [s ^java.io.Writer w]

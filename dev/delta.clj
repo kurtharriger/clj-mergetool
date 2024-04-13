@@ -7,6 +7,46 @@
             [meander.epsilon :as m]
             [editscript.edit :as edit]))
 
+;; exploring alternative diff such postions
+;; are relative rather than hardcoded which
+;; makes it easier to walk both in a zipper
+;; advancing or not as needed
+
+(e/diff [:a] [:a :b :c])
+;; => [[[1] :+ :b] [[2] :+ :c]]
+; would be (retiain (retain) (insert :b) (insert :c))
+
+;; notice that the path of the second edit is dependent
+;; on the state of the left document after the first
+;; edit is applied.
+(e/diff [:a :b :c] [:a])
+;; => [[[1] :-] [[1] :-]]
+; would be (retain (delete) (delete))
+
+(e/diff [:a :b] [:b :c])
+;; => [[[0] :-] [[1] :+ :c]]
+; would be (retain (delete) (retain) (insert :c)))
+
+(e/diff [:a :b :c] [:b :c :d])
+;; => [[[0] :-] [[2] :+ :d]]
+; would be (retain (delete) (retain) (insert :c)))
+
+(e/diff [:a :b :c :d] [:b :c :d :e])
+;; => [[[0] :-] [[3] :+ :e]]
+; would be (retain (delete) (retain 2) (insert :c)))
+
+(e/diff [:a :b :c] [:a :d])
+;; => [[[1] :-] [[1] :r :d]]
+; in this case editscirpt is deleting the b and replacing the c
+;; but any of the following would produce the same result
+;; (retain (retain) (delete) (replace :d)))
+;; (retain (retain) (replace :d) (delete)))
+;; (retain (retain) (delete 2) (insert :d)))
+;; (retain (retain) (insert :d) (delete 2)))
+;; (retain (retain) (delete) (insert :d) (delete)))
+
+;; the specific nodes are not used but for now adding to
+;; make results easier to verify
 (defn retain [len anodes bnodes]
   {:pre [(= len (count anodes))
          (= len (count bnodes))

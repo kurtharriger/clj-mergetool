@@ -1,16 +1,31 @@
 (ns kurtharriger.clj-mergetool-test
   (:require
-   [clojure.pprint :as pprint]
+   [babashka.fs :as fs]
    [clojure.test :refer :all]
-   [editscript.core :as e]
-   [rewrite-clj.node :as n]
-
-   [kurtharriger.clj-mergetool.util.simulator :as simulator]
-   [kurtharriger.clj-mergetool :refer :all]
-   [rewrite-clj.parser :as p]))
+   [kurtharriger.clj-mergetool.util.simulator :as s]))
 
 
 
+(comment
+  (defn test-repo [n]
+    (let [sim-dir (str "local/test/" n)]
+      (s/prepare-repo! (s/init-repo :dir sim-dir)
+                       [:file (str "test-resources/examples/ex" n "/base.clj")]
+                       [:file (str "test-resources/examples/ex" n "/left.clj")]
+                       [:file (str "test-resources/examples/ex" n "/right.clj")])))
 
+  (test-repo 3)
+
+  :rcf)
+
+(comment
+  (let [sim-dir "local/test/cljc"
+        source-dir "local/cljc"
+        base (fs/file source-dir "file.base.clj")
+        left (fs/file source-dir "file.current.clj")
+        right (fs/file source-dir "file.other.clj")]
+    (s/prepare-repo! (s/init-repo :dir sim-dir) [:file base] [:file left] [:file right]))
+
+  :rcf)
 
 
