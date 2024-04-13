@@ -1,6 +1,10 @@
 # Change Log
 
-## 0.3.0 - [Unreleased]
+## 0.4.0 - [Unreleased]
+
+...
+
+## [0.3.0] - 2024-04-13
 
 Copy leading whitespace on map keys
 
@@ -25,7 +29,8 @@ Initial release
 
 ---
 
-[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.2.2...HEAD
+[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.3.0...HEAD
+[0.3.0]: https://github.com/kurtharriger/clj-mergetool/compare/0.2.2...0.3.0
 [0.2.2]: https://github.com/kurtharriger/clj-mergetool/compare/0.2.1...0.2.2
 [0.2.1]: https://github.com/kurtharriger/clj-mergetool/compare/0.2.0...0.2.1
 [0.2.0]: https://github.com/kurtharriger/clj-mergetool/compare/0.1.0...0.2.0
