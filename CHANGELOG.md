@@ -1,8 +1,10 @@
 # Change Log
 
-## 0.3.0 - [Unreleased]
+## 0.2.2 - [Unreleased]
 
-...
+Add conflict message
+Print conflict to stderr
+Fix broken symlink on dev install `clj -T:build install :link true`
 
 ## [0.2.1] - 2024-04-12
 
