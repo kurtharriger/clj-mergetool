@@ -143,6 +143,10 @@ Please [open an issue](https://github.com/kurtharriger/clj-mergetool/issues/new)
 
 - Leading whitespace and/or comments on map keys not preserved
 
+- Duplication of whitespace on insert/replace
+
+- sexpr may wrap some forms in (do ...)
+
 - Conflict detection
 
 - Untested on Windows

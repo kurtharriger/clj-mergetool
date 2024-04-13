@@ -77,7 +77,9 @@
     (and (= op :merge) conflicts)
     (do
     ;; todo write merged with conflicts
-      (when conflicts (prn conflicts))
+      (when conflicts (binding [*out* *err*]
+                        (println "Conflicting edits at same location")
+                        (prn conflicts)))
       (assoc ctx :exit-code 1))
 
     (= op :merge)
