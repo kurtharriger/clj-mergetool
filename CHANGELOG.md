@@ -2,7 +2,7 @@
 
 ## 0.3.0 - [Unreleased]
 
-...
+Copy leading whitespace on map keys
 
 ## [0.2.2] - 2024-04-13
 

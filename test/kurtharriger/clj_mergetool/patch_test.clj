@@ -117,5 +117,15 @@
         (n/string)
         (println)))
 
+  (let [base (p/parse-file-all "test-resources/examples/ex3/base.clj")
+        right (p/parse-file-all "test-resources/examples/ex3/right.clj")
+        editscript (diff base right)]
+    (-> editscript
+        (e/get-edits)
+        (->> (map last)
+             (first))
+        meta
+        :key-node
+        meta))
 
   :rcf)

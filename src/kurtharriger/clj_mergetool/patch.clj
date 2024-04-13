@@ -132,7 +132,7 @@
 
 (defmethod add-child :map [zipper key value]
   (-> zipper
-      (z/append-child key)
+      (z/append-child (if-let [node (-> value meta :key-node)] node key))
       (z/append-child value)))
 
 (defmethod add-child :set [zipper key value]
@@ -201,18 +201,16 @@
     edits
     (-> (for [edit edits]
           (m/match edit
-            [?path :r ?value] (let [rnode (add-leading-metadata (z/node (focus rzip ?path)))]
-                                ;todo
-                                ;rewrite-clj sexpr may prefix a (do ..) in some forms causing assert
-                                ;removing for now
-                                ;(assert (= (n/sexpr rnode) ?value) (str "expected " ?value " got " (n/sexpr rnode)))
-                                [?path :r rnode])
-            [?path :+ ?value] (let [rnode (add-leading-metadata (z/node (focus rzip ?path)))]
-                                ;(assert (= (n/sexpr rnode) ?value) (str "expected " ?value " got " (n/sexpr rnode)))
-                                [?path :+ rnode])
+            [?path ?replace-or-add ?value]
+            (let [node (add-leading-metadata (z/node (focus rzip ?path)))
+                   ;; if node is a map value than also grab the map key
+                  node (when (= (z/tag (focus rzip (butlast ?path))) :map)
+                         (vary-meta node assoc :key-node (add-leading-metadata
+                                                          (z/node (z/left (focus rzip ?path))))))]
+              [?path ?replace-or-add node])
             ?other ?other))
-        vec
-        e/edits->script)))
+        (vec)
+        (e/edits->script))))
 
 
 (defn expand-leading-whitespace-meta

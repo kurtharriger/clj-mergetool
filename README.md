@@ -141,9 +141,7 @@ Please [open an issue](https://github.com/kurtharriger/clj-mergetool/issues/new)
 
   rewrite-clj currenlty emits reader literals as strings which are somewhat opaque to editscript often resulting in the entire node being replaced.
 
-- Leading whitespace and/or comments on map keys not preserved
-
-- Duplication of whitespace on insert/replace
+- potential duplication of leading whitespace
 
 - sexpr may wrap some forms in (do ...)
 
@@ -156,7 +154,6 @@ Please [open an issue](https://github.com/kurtharriger/clj-mergetool/issues/new)
 
 # Roadmap
 
-- fix whitespace/comments on map keys
 - cljc support
 - explore alternative diff representation
 - improve conflict detection
