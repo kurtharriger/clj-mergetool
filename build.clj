@@ -161,7 +161,7 @@
         opts (uber-opts opts)]
     (fs/delete-if-exists bin-path)
     (if link
-      (shell "ln" "-s" (str (fs/file "bin" "clj-mergetool")) bin-path)
+      (shell "ln" "-s" (str (fs/absolutize (fs/file "bin" "clj-mergetool"))) bin-path)
       (let [{:keys [binary]} (build opts)]
         (fs/copy binary bin-path)))))
 
