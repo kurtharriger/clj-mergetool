@@ -204,9 +204,10 @@
             [?path ?replace-or-add ?value]
             (let [node (add-leading-metadata (z/node (focus rzip ?path)))
                    ;; if node is a map value than also grab the map key
-                  node (when (= (z/tag (focus rzip (butlast ?path))) :map)
+                  node (if (= (z/tag (focus rzip (butlast ?path))) :map)
                          (vary-meta node assoc :key-node (add-leading-metadata
-                                                          (z/node (z/left (focus rzip ?path))))))]
+                                                          (z/node (z/left (focus rzip ?path)))))
+                         node)]
               [?path ?replace-or-add node])
             ?other ?other))
         (vec)
@@ -227,9 +228,141 @@
                      node))
                  root-node))
 
+
+(defn encode-reader-macro-nodes
+  "n/sexpr represents reader macro nodes as read-strings that are opaque to editscript
+     rewrite these as maps tagged with metadata for post patching replacement"
+  [node]
+  (walk/postwalk
+   (fn [n]
+     (if (and (n/node? n) (= :reader-macro (n/tag n)))
+       (-> n
+           (n/children)
+           (second)
+           (n/children)
+           (n/map-node)
+           (vary-meta assoc ::reader-macro true))
+       n)) node))
+
+(defn decode-reader-macro-nodes
+  "n/sexpr represents reader macro nodes as read-strings that are opaque to editscript
+     rewrite these as vectors tagged with metadata for post patching replacement"
+  [node]
+  (walk/postwalk
+   (fn [n]
+     (if (-> node meta ::reader-macro)
+       (-> n
+           (n/children)
+           (->> (cons (n/token-node '?)))
+           (n/reader-macro-node)
+           (vary-meta assoc ::reader-macro true))
+       n)) node))
+
+
+(comment
+  (-> "#?(:clj 1  :cljs 2)"
+      (p/parse-string)
+      (n/string))
+
+;; => "#?(:clj 1  :cljs 2)"
+
+  (-> "#?(:clj 1  :cljs 2)"
+      (p/parse-string)
+      (n/sexpr))
+      ;; => "(read-string \"#?(:clj 1  :cljs 2)\")"
+
+  (-> "#?(:clj 1 :cljs 2)"
+      (p/parse-string)
+      (encode-reader-macro-nodes)
+      ((juxt meta identity)))
+  ;; => [#:kurtharriger.clj-mergetool.patch{:reader-macro true} [[:clj 1] [:cljs 2]]]
+
+  (-> "#?(:cljs 1 :clj #_comment 2)"
+      (p/parse-string)
+      (decode-reader-macro-nodes)
+      (n/string))
+  ;; => "#?(:cljs 1 :clj #_comment 2)"
+
+
+
+
+  :rcf)
+
+(defn encode-forms-nodes
+  "n/sexpr represents reader macro nodes as read-strings that are opaque to editscript
+     rewrite these as maps tagged with metadata for post patching replacement"
+  [node]
+  (walk/postwalk
+   (fn [n]
+     (if (and (n/node? n) (= :forms (n/tag n)))
+       (-> n
+           (n/children)
+           (n/list-node)
+           (vary-meta assoc ::forms true))
+       n)) node))
+
+(defn decode-forms-nodes
+  "n/sexpr represents reader macro nodes as read-strings that are opaque to editscript
+     rewrite these as vectors tagged with metadata for post patching replacement"
+  [node]
+  (walk/postwalk
+   (fn [n]
+     (if (-> n meta ::forms)
+       (-> n
+           (n/children)
+           (n/forms-node))
+       n)) node))
+
+(comment
+  (let [base (parse-string-all "(ns test)\n(def a 1)")
+        current (parse-string-all "(ns test)\n(def a 2)")]
+    [base current (e/diff base current)])
+  ;; => [<forms:
+  ;;      (ns test)
+  ;;      (def a 1)
+  ;;    > <forms:
+  ;;      (ns test)
+  ;;      (def a 2)
+  ;;    > [[[:children] :r (<list: (ns test)> <newline: "\n"> <list: (def a 2)>)]]]
+
+
+  (let [base (parse-string-all "(ns test)\n(def a 1)")
+        current (parse-string-all "(ns test)\n(def a 2)")
+        base  (vec (n/child-sexprs base))
+        current (vec (n/child-sexprs current))]
+    [base current (e/diff base current)])
+  ;; => [[(ns test) (def a 1)] [(ns test) (def a 2)] [[[1 2] :r 2]]]
+
+  (let [base (parse-string-all "(ns test)\n(def a 1)")]
+    (n/tag base))
+
+  (let [base (parse-string-all "(ns test)\n(def a 1)")
+        current (parse-string-all "(ns test)\n(def a 2)")
+        encode #(n/sexpr (n/list-node (n/children %)))
+        [base current] (mapv encode [base current])]
+    [base current (e/diff base current)])
+
+  (let [base (parse-string-all "(ns test)\n(def a 1)")]
+    (-> base
+        (encode-forms-nodes)
+        (decode-forms-nodes)
+        (n/string)))
+
+
+  *e
+  :rcf)
+
+
+(defn parse-string-all [content]
+  (-> (p/parse-string-all content)
+      (encode-reader-macro-nodes)
+      (encode-forms-nodes)))
+
 (defn patch
   "Applies an editscript patch to rewrite-clj node."
   [node editscript]
   (-> (reduce patch* (zipper node) (e/get-edits editscript))
       (z/root)
-      (expand-leading-whitespace-meta)))
+      (expand-leading-whitespace-meta)
+      (decode-reader-macro-nodes)
+      (decode-forms-nodes)))

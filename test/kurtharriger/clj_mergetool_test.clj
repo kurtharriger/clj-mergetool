@@ -2,6 +2,7 @@
   (:require
    [babashka.fs :as fs]
    [clojure.test :refer :all]
+   [kurtharriger.clj-mergetool :as mt]
    [kurtharriger.clj-mergetool.util.simulator :as s]))
 
 
@@ -14,7 +15,7 @@
                        [:file (str "test-resources/examples/ex" n "/left.clj")]
                        [:file (str "test-resources/examples/ex" n "/right.clj")])))
 
-  (test-repo 3)
+  (test-repo 2)
 
   :rcf)
 
@@ -27,5 +28,8 @@
     (s/prepare-repo! (s/init-repo :dir sim-dir) [:file base] [:file left] [:file right]))
 
   :rcf)
+
+
+
 
 

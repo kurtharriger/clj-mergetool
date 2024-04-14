@@ -1,8 +1,9 @@
 # Change Log
 
-## 0.4.0 - [Unreleased]
+## 0.3.1 - [Unreleased]
 
-...
+Fix only forms sexpr representation resulting in replace of ns form only
+Fix missing else resulting in nil replacement
 
 ## [0.3.0] - 2024-04-13
 

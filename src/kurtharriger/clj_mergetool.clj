@@ -38,7 +38,7 @@
 
 (defn diff
   [ctx]
-  (let [base (some-> ctx :base :parsed n/sexpr)
+  (let [base (some-> ctx :base :parsed)
         mkdiff (partial patch/diff base)
         editscripts (->> (map #(some-> ctx % :parsed mkdiff) [:left :right])
                          (filter (complement nil?))
@@ -80,6 +80,7 @@
       (when conflicts (binding [*out* *err*]
                         (println "Conflicting edits at same location")
                         (prn conflicts)))
+
       (assoc ctx :exit-code 1))
 
     (= op :merge)
@@ -115,7 +116,7 @@
                 (-> (sh opts "git" "show" (str ":" n ":" file))
                     (check)
                     (:out)
-                    (p/parse-string-all)))
+                    (patch/parse-string-all)))
         files* (or (not-empty files)
                    (unmerged-files opts))]
     (not-empty
@@ -136,7 +137,7 @@
   (load-from-index {})
 
   (unmerged-files {:dir "local/ex"})
-  (load-from-index {:dir "local/ex"})
+  (load-from-index {:opts {:dir "local/test/cljc"}})
   (load-from-index {:dir "local/ex"} "base.clj")
 
  ;;
@@ -157,7 +158,6 @@
   (let [results (->> (apply load-from-index {:dir dir} files)
                      (map #(assoc % :op :diff))
                      (map diff)
-                     (map patch)
                      (map output))
         exit-code (if (not-empty results) (apply max (map :exit-code results)) 0)]
     {:exit-code exit-code
@@ -193,11 +193,13 @@
                  {:cmds ["version"] :fn #'show-version}
                  {:cmds [] :fn #'help}] args)]
     (when-let [ec (:exit-code result)]
-      (System/exit ec)))
+      (System/exit ec))))
 
 
-
-
-
+(comment
+  (let [ctx (first (load-from-index {:dir "local/test/cljc"}))
+        [base left] (m/match ctx {:base {:parsed ?b}
+                                  :left {:parsed ?l}} [?b ?l])]
+    (patch/diff base left))
 
   :rcf)
