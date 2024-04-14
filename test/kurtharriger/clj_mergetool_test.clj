@@ -22,9 +22,9 @@
 (comment
   (let [sim-dir "local/test/cljc"
         source-dir "local/cljc"
-        base (fs/file source-dir "file.base.clj")
-        left (fs/file source-dir "file.current.clj")
-        right (fs/file source-dir "file.other.clj")]
+        base (fs/file source-dir "snip.base.clj")
+        left (fs/file source-dir "snip.current.clj")
+        right (fs/file source-dir "snip.other.clj")]
     (s/prepare-repo! (s/init-repo :dir sim-dir) [:file base] [:file left] [:file right]))
 
   :rcf)

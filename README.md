@@ -137,15 +137,9 @@ Please [open an issue](https://github.com/kurtharriger/clj-mergetool/issues/new)
 
 # Known Issues
 
-- cljc / reader-literals
+- limited testing on real examples (See above)
 
-  rewrite-clj currenlty emits reader literals as strings which are somewhat opaque to editscript often resulting in the entire node being replaced.
-
-- potential duplication of leading whitespace
-
-- sexpr may wrap some forms in (do ...)
-
-- Conflict detection
+- missing and/or duplicate whitespace before insert/replace point
 
 - Untested on Windows
 
@@ -154,10 +148,10 @@ Please [open an issue](https://github.com/kurtharriger/clj-mergetool/issues/new)
 
 # Roadmap
 
-- cljc support
 - explore alternative diff representation
 - improve conflict detection
-- simplify installation
+- simplify installation with prebuilt binaries
+- improve documentation
 - improve diff visualization
 - explore detection and respresentation of higher order refactorings, such as: rename symbol, align forms, sort keys
 

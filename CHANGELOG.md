@@ -1,8 +1,8 @@
 # Change Log
 
-## 0.5.0 - [Unreleased]
+## 0.4.1 - [Unreleased]
 
-...
+Fix decode-reader-macro
 
 ## [0.4.0] - 2024-04-14
 

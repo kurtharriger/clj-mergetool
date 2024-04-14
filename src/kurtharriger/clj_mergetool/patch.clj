@@ -198,7 +198,6 @@
         rzip (zipper right)
         editscript (e/diff (n/sexpr left) (n/sexpr right))
         edits (e/get-edits editscript)]
-    edits
     (-> (for [edit edits]
           (m/match edit
             [?path ?replace-or-add ?value]
@@ -236,26 +235,27 @@
   (walk/postwalk
    (fn [n]
      (if (and (n/node? n) (= :reader-macro (n/tag n)))
-       (-> n
-           (n/children)
-           (second)
-           (n/children)
-           (n/map-node)
-           (vary-meta assoc ::reader-macro true))
+       (let [[token children] (n/children n)]
+         (-> children
+             (n/children)
+             (n/map-node)
+             (vary-meta merge
+                        {::reader-macro true
+                         ::reader-macro-token token})))
        n)) node))
 
 (defn decode-reader-macro-nodes
   "n/sexpr represents reader macro nodes as read-strings that are opaque to editscript
      rewrite these as vectors tagged with metadata for post patching replacement"
   [node]
-  (walk/postwalk
+  (walk/prewalk
    (fn [n]
-     (if (-> node meta ::reader-macro)
+     (if (and (n/node? n) (-> n meta ::reader-macro))
        (-> n
            (n/children)
-           (->> (cons (n/token-node '?)))
-           (n/reader-macro-node)
-           (vary-meta assoc ::reader-macro true))
+           (n/list-node)
+           (list)
+           (->> (cons (-> n meta ::reader-macro-token)) (n/reader-macro-node)))
        n)) node))
 
 
@@ -279,10 +279,20 @@
 
   (-> "#?(:cljs 1 :clj #_comment 2)"
       (p/parse-string)
+      (n/children))
+  ;; => (<token: ?> <list: (:cljs 1 :clj #_comment 2)>)
+
+  (-> "#?(:cljs 1 :clj #_comment 2)"
+      (p/parse-string)
+      (encode-reader-macro-nodes)
       (decode-reader-macro-nodes)
       (n/string))
-  ;; => "#?(:cljs 1 :clj #_comment 2)"
 
+  (-> "#?@(:cljs 1 :clj #_comment 2)"
+      (p/parse-string)
+      (encode-reader-macro-nodes)
+      (decode-reader-macro-nodes)
+      (n/string))
 
 
 
@@ -366,3 +376,25 @@
       (expand-leading-whitespace-meta)
       (decode-reader-macro-nodes)
       (decode-forms-nodes)))
+
+
+(comment
+  (let [base (parse-string-all (slurp "test-resources/examples/ex4/base.clj"))
+        right (parse-string-all (slurp "test-resources/examples/ex4/right.clj"))
+        editscript (diff base right)]
+    (-> base
+        (patch editscript)
+        (zipper)
+        (focus [1 2])
+        (z/node)
+        ;(n/children)
+        ;(->> (map meta))
+        (decode-reader-macro-nodes)
+        ; (n/children)
+        ;;  (->> (cons (n/token-node '?)))
+        ;;  (n/reader-macro-node))
+        ;((juxt meta identity))
+        ))
+
+  *e
+  :rcf)
