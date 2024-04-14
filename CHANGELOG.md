@@ -1,6 +1,10 @@
 # Change Log
 
-## 0.3.1 - [Unreleased]
+## 0.4.0 - [Unreleased]
+
+...
+
+## [0.3.1] - 2024-04-14
 
 Fix only forms sexpr representation resulting in replace of ns form only
 Fix missing else resulting in nil replacement
@@ -30,7 +34,8 @@ Initial release
 
 ---
 
-[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.3.0...HEAD
+[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.3.1...HEAD
+[0.3.1]: https://github.com/kurtharriger/clj-mergetool/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/kurtharriger/clj-mergetool/compare/0.2.2...0.3.0
 [0.2.2]: https://github.com/kurtharriger/clj-mergetool/compare/0.2.1...0.2.2
 [0.2.1]: https://github.com/kurtharriger/clj-mergetool/compare/0.2.0...0.2.1
