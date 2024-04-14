@@ -9,6 +9,13 @@
         org.clojure/tools.trace {:mvn/version "0.8.0"}}
  :aliases
  {:dev {:extra-paths ["dev"]}
+  :flowstorm {:classpath-overrides {org.clojure/clojure nil}
+              :extra-deps {com.github.flow-storm/clojure {:mvn/version "1.12.0-alpha9_1"}
+                           com.github.flow-storm/flow-storm-dbg {:mvn/version "3.13.1"}}
+              :jvm-opts ["-Dflowstorm.startRecording=false"
+                         "-Dclojure.storm.instrumentEnable=true"
+                         "-Dclojure.storm.instrumentAutoPrefixes=true"
+                         "-Dflowstorm.fileEditorCommand=code --goto <<FILE>>:<<LINE>>"]}
   :run {:main-opts ["-m" "kurtharriger.clj-mergetool"]}
   :diff {:main-opts ["-m" "kurtharriger.clj-mergetool" "diff"]}
   :build {:deps {io.github.clojure/tools.build {:mvn/version "0.9.4"}

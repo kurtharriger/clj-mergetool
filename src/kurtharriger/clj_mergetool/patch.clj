@@ -186,12 +186,15 @@
                         (reverse)
                         (vec)))))))
 
+;(def !debug (atom nil))
+
 (defn diff
   "Creates an editscript over and containing rewrite-clj nodes.
    The values within the editscript are replaced with the source nodes from the right document so that whitespace within those nodes is preserved.
    Leading whitespace for the node is stored on ::leading-whitespace meta property for use post patching.
    "
   [left right]
+  ;(reset! !debug [left right])
   (let [left (n/coerce left)
         right (n/coerce right)
         add-leading-metadata (make-add-leading-metadata right)
@@ -211,6 +214,7 @@
             ?other ?other))
         (vec)
         (e/edits->script))))
+
 
 
 (defn expand-leading-whitespace-meta
@@ -323,6 +327,31 @@
            (n/forms-node))
        n)) node))
 
+(defn encode-fn-nodes
+  "n/sexpr represents reader macro nodes as read-strings that are opaque to editscript
+     rewrite these as maps tagged with metadata for post patching replacement"
+  [node]
+  (walk/postwalk
+   (fn [n]
+     (if (and (n/node? n) (= :fn (n/tag n)))
+       (-> n
+           (n/children)
+           (n/list-node)
+           (vary-meta assoc ::fn true))
+       n)) node))
+
+(defn decode-fn-nodes
+  "n/sexpr represents reader macro nodes as read-strings that are opaque to editscript
+     rewrite these as vectors tagged with metadata for post patching replacement"
+  [node]
+  (walk/postwalk
+   (fn [n]
+     (if (-> n meta ::fn)
+       (-> n
+           (n/children)
+           (n/fn-node))
+       n)) node))
+
 (comment
   (let [base (parse-string-all "(ns test)\n(def a 1)")
         current (parse-string-all "(ns test)\n(def a 2)")]
@@ -359,13 +388,46 @@
         (n/string)))
 
 
-  *e
   :rcf)
+
+
+(comment
+  (-> "#(+ %  1)"
+      (p/parse-string-all)
+      (n/sexpr))
+    ;; => ((fn* [p1__23888#] (+ p1__23888# 1)))
+
+
+  (-> "#(+ %  1)"
+      (p/parse-string-all)
+      (n/children)
+      (first)
+      ((juxt n/tag n/string)))
+    ;; => [:fn "#(+ %  1)"]
+
+  (-> "(fn add [x] (+ x  1))"
+      (p/parse-string-all)
+      (n/children)
+      (first)
+      (n/children)
+      (first)
+      ((juxt n/tag n/string)))
+    ;; => [:token "fn"]
+
+
+  (-> "#(+ 1  %)"
+      (p/parse-string-all)
+      (encode-fn-nodes)
+      (decode-fn-nodes)
+      (encode-forms-nodes)
+      (decode-forms-nodes)
+      (n/string)))
 
 
 (defn parse-string-all [content]
   (-> (p/parse-string-all content)
       (encode-reader-macro-nodes)
+      (encode-fn-nodes)
       (encode-forms-nodes)))
 
 (defn patch
@@ -375,6 +437,7 @@
       (z/root)
       (expand-leading-whitespace-meta)
       (decode-reader-macro-nodes)
+      (decode-fn-nodes)
       (decode-forms-nodes)))
 
 

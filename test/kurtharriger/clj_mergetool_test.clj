@@ -22,10 +22,15 @@
 (comment
   (let [sim-dir "local/test/cljc"
         source-dir "local/cljc"
-        base (fs/file source-dir "snip.base.clj")
-        left (fs/file source-dir "snip.current.clj")
-        right (fs/file source-dir "snip.other.clj")]
-    (s/prepare-repo! (s/init-repo :dir sim-dir) [:file base] [:file left] [:file right]))
+        base (fs/file source-dir "file.base.clj")
+        left (fs/file source-dir "file.current.clj")
+        right (fs/file source-dir "file.other.clj")
+        repo (s/init-repo :dir sim-dir)]
+    (s/prepare-repo! repo [:file base] [:file left] [:file right])
+    (s/merge! repo "right"))
+
+  (mt/show-diff {:opts {:dir "local/test/cljc"}})
+
 
   :rcf)
 
