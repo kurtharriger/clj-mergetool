@@ -1,6 +1,10 @@
 # Change Log
 
-## 0.4.3 - [Unreleased]
+## 0.5.0 - [Unreleased]
+
+...
+
+## [0.4.3] - 2024-04-14
 
 Fix uneval nodes need additional encoding decoding
 
@@ -48,7 +52,8 @@ Initial release
 
 ---
 
-[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.2...HEAD
+[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.3...HEAD
+[0.4.3]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.2...0.4.3
 [0.4.2]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.1...0.4.2
 [0.4.1]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/kurtharriger/clj-mergetool/compare/0.3.1...0.4.0
