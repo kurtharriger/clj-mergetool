@@ -15,7 +15,7 @@
                        [:file (str "test-resources/examples/ex" n "/left.clj")]
                        [:file (str "test-resources/examples/ex" n "/right.clj")])))
 
-  (test-repo 2)
+  (test-repo 4)
 
   :rcf)
 

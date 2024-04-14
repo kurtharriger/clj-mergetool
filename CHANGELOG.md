@@ -2,12 +2,14 @@
 
 ## 0.4.0 - [Unreleased]
 
-...
+Change conflict handling to still merge and print warning rather than abort
+Remove identitcal edits to avoid conflict warning
 
 ## [0.3.1] - 2024-04-14
 
 Fix only forms sexpr representation resulting in replace of ns form only
 Fix missing else resulting in nil replacement
+Endoce/decode reader-macros to support cljc
 
 ## [0.3.0] - 2024-04-13
 

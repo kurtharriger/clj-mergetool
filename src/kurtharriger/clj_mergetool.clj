@@ -44,7 +44,7 @@
                          (filter (complement nil?))
                          (seq))
         editscript (when editscripts (reduce e/combine editscripts))
-        edits (when editscript (e/get-edits editscript))
+        edits (when editscript (distinct (e/get-edits editscript)))
 
         ;; todo: this is check is not very good
         ;; since editscript replace ops and add/remove
@@ -58,8 +58,8 @@
            :editscript editscript
            :conflicts conflicts)))
 
-(defn patch [{:keys [op base editscript conflicts] :as ctx}]
-  (if-not (and (= :merge op) (empty? conflicts))
+(defn patch [{:keys [op base editscript] :as ctx}]
+  (if-not (and (= :merge op))
     ctx
     (let [base (-> base :parsed)
           patched (patch/patch base editscript)
@@ -74,19 +74,15 @@
       (when diff (prn diff))
       (assoc ctx :exit-code 0))
 
-    (and (= op :merge) conflicts)
-    (do
-    ;; todo write merged with conflicts
-      (when conflicts (binding [*out* *err*]
-                        (println "Conflicting edits at same location")
-                        (prn conflicts)))
-
-      (assoc ctx :exit-code 1))
-
     (= op :merge)
     (do (if output-file (spit output-file merged)
             (when merged (println merged)))
-        (assoc ctx :exit-code 0))))
+        (if conflicts
+          (binding [*out* *err*]
+            (println "Potentially conflicting edits at same location")
+            (prn conflicts)
+            (assoc ctx :exit-code 1))
+          (assoc ctx :exit-code 0)))))
 
 
 (defn mergetool [{{:keys [ancestor current other output]} :opts dir :dir}]
