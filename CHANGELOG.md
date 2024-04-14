@@ -1,6 +1,10 @@
 # Change Log
 
-## 0.4.0 - [Unreleased]
+## 0.5.0 - [Unreleased]
+
+...
+
+## [0.4.0] - 2024-04-14
 
 Change conflict handling to still merge and print warning rather than abort
 Remove identitcal edits to avoid conflict warning
@@ -36,7 +40,8 @@ Initial release
 
 ---
 
-[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.3.1...HEAD
+[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.0...HEAD
+[0.4.0]: https://github.com/kurtharriger/clj-mergetool/compare/0.3.1...0.4.0
 [0.3.1]: https://github.com/kurtharriger/clj-mergetool/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/kurtharriger/clj-mergetool/compare/0.2.2...0.3.0
 [0.2.2]: https://github.com/kurtharriger/clj-mergetool/compare/0.2.1...0.2.2
