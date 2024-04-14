@@ -1,8 +1,8 @@
 # Change Log
 
-## 0.5.0 - [Unreleased]
+## 0.4.3 - [Unreleased]
 
-...
+Fix uneval nodes need additional encoding decoding
 
 ## [0.4.2] - 2024-04-14
 

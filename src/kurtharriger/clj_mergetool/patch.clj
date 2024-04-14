@@ -215,8 +215,16 @@
         (vec)
         (e/edits->script))))
 
+(comment
 
-
+  (apply diff @!debug)
+  (def !debug2 (atom nil))
+  (let [[left right] @!debug
+        add-leading-metadata (make-add-leading-metadata right)
+        rzip (zipper right)
+        editscript (e/diff (n/sexpr left) (n/sexpr right))
+        edits (e/get-edits editscript)]
+    edits))
 (defn expand-leading-whitespace-meta
   "Inserts leading whitespace "
   [root-node]
@@ -352,6 +360,31 @@
            (n/fn-node))
        n)) node))
 
+(defn encode-uneval-nodes
+  "n/sexpr represents reader macro nodes as read-strings that are opaque to editscript
+     rewrite these as maps tagged with metadata for post patching replacement"
+  [node]
+  (walk/postwalk
+   (fn [n]
+     (if (and (n/node? n) (= :uneval (n/tag n)))
+       (-> n
+           (n/children)
+           (n/list-node)
+           (vary-meta assoc ::uneval true))
+       n)) node))
+
+(defn decode-uneval-nodes
+  "n/sexpr represents reader macro nodes as read-strings that are opaque to editscript
+     rewrite these as vectors tagged with metadata for post patching replacement"
+  [node]
+  (walk/postwalk
+   (fn [n]
+     (if (-> n meta ::uneval)
+       (-> n
+           (n/children)
+           (n/uneval-node))
+       n)) node))
+
 (comment
   (let [base (parse-string-all "(ns test)\n(def a 1)")
         current (parse-string-all "(ns test)\n(def a 2)")]
@@ -428,6 +461,7 @@
   (-> (p/parse-string-all content)
       (encode-reader-macro-nodes)
       (encode-fn-nodes)
+      (encode-uneval-nodes)
       (encode-forms-nodes)))
 
 (defn patch
@@ -438,6 +472,7 @@
       (expand-leading-whitespace-meta)
       (decode-reader-macro-nodes)
       (decode-fn-nodes)
+      (decode-uneval-nodes)
       (decode-forms-nodes)))
 
 
