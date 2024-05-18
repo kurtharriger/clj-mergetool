@@ -1,6 +1,10 @@
 # Change Log
 
-## 0.5.0 - [Unreleased]
+## 0.6.0 - [Unreleased]
+
+...
+
+## [0.5.0] - 2024-05-18
 
 Fix [#2](https://github.com/kurtharriger/clj-mergetool/issues/2) error querying git index where unmerged file is deleted
 
@@ -55,7 +59,8 @@ Initial release
 
 ---
 
-[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.3...HEAD
+[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.3...0.5.0
 [0.4.3]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.2...0.4.3
 [0.4.2]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.1...0.4.2
 [0.4.1]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.0...0.4.1
