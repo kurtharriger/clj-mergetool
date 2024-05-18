@@ -34,7 +34,7 @@ jobs:
           bb: 'latest'
 
       - name: Run CI Task
-        run: clj -T:build ci
+        run: clojure -T:build ci
 
       - name: Archive build artifact for Linux
         if: runner.os == 'Linux'
@@ -98,20 +98,23 @@ jobs:
           bb: 'latest'
 
       - name: Run Release Version Task
-        run: clj -T:build release-version
+        if: github.ref == 'refs/heads/main'
+        run: clojure -T:build release-version
 
-      # - name: Push changes
-      #   run: |
-      #     git config --global user.name 'github-actions[bot]'
-      #     git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-      #     git push origin main
+      - name: Push changes
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git push origin main
 
-      # - name: Create Release
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     files: |
-      #       target/clj-mergetool-linux
-      #       target/clj-mergetool-windows.exe
-      #       target/clj-mergetool-macos
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            target/clj-mergetool-linux
+            target/clj-mergetool-windows.exe
+            target/clj-mergetool-macos
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
