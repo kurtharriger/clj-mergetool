@@ -104,7 +104,7 @@ jobs:
           bb: 'latest'
 
       - name: Run Release Version Task
-        if: github.ref == 'refs/heads/main'
+        # if: github.ref == 'refs/heads/main'
         run: clojure -T:build release-version
 
       - name: Push changes
