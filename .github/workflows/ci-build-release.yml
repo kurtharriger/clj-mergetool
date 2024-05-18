@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        arch: [amd64, arm64]
 
     runs-on: ${{ matrix.os }}
 
@@ -26,6 +27,7 @@ jobs:
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
+          architecture: ${{ matrix.arch }}
 
       - name: Install Clojure CLI and Babashka
         uses: DeLaGuardo/setup-clojure@12.5
@@ -39,7 +41,7 @@ jobs:
       - name: Archive build artifact
         uses: actions/upload-artifact@v2
         with:
-          name: clj-mergetool-${{ matrix.os }}
+          name: clj-mergetool-${{ matrix.os }}-${{ matrix.arch }}
           path: target/clj-mergetool${{ matrix.os == 'windows-latest' && '.exe' || '' }}
 
   release:
@@ -50,23 +52,41 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download build artifacts for Linux
+      - name: Download build artifacts for Linux amd64
         uses: actions/download-artifact@v2
         with:
-          name: clj-mergetool-ubuntu
-          path: target/clj-mergetool-linux
+          name: clj-mergetool-ubuntu-latest-amd64
+          path: target/clj-mergetool-linux-amd64
 
-      - name: Download build artifacts for Windows
+      - name: Download build artifacts for Linux arm64
         uses: actions/download-artifact@v2
         with:
-          name: clj-mergetool-windows
-          path: target/clj-mergetool-windows.exe
+          name: clj-mergetool-ubuntu-latest-arm64
+          path: target/clj-mergetool-linux-arm64
 
-      - name: Download build artifacts for macOS
+      - name: Download build artifacts for Windows amd64
         uses: actions/download-artifact@v2
         with:
-          name: clj-mergetool-macos
-          path: target/clj-mergetool-macos
+          name: clj-mergetool-windows-latest-amd64
+          path: target/clj-mergetool-windows-amd64.exe
+
+      - name: Download build artifacts for Windows arm64
+        uses: actions/download-artifact@v2
+        with:
+          name: clj-mergetool-windows-latest-arm64
+          path: target/clj-mergetool-windows-arm64.exe
+
+      - name: Download build artifacts for macOS amd64
+        uses: actions/download-artifact@v2
+        with:
+          name: clj-mergetool-macos-latest-amd64
+          path: target/clj-mergetool-macos-amd64
+
+      - name: Download build artifacts for macOS arm64
+        uses: actions/download-artifact@v2
+        with:
+          name: clj-mergetool-macos-latest-arm64
+          path: target/clj-mergetool-macos-arm64
 
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
@@ -75,6 +95,7 @@ jobs:
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
+          architecture: ${{ matrix.arch }}
 
       - name: Install Clojure CLI and Babashka
         uses: DeLaGuardo/setup-clojure@12.5
@@ -98,8 +119,11 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            target/clj-mergetool-linux
-            target/clj-mergetool-windows.exe
-            target/clj-mergetool-macos
+            target/clj-mergetool-linux-amd64
+            target/clj-mergetool-linux-arm64
+            target/clj-mergetool-windows-amd64.exe
+            target/clj-mergetool-windows-arm64.exe
+            target/clj-mergetool-macos-amd64
+            target/clj-mergetool-macos-arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
