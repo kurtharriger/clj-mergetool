@@ -4,49 +4,34 @@ about: Use this template for providing an example merge conflict
 labels: example merge conflict
 ---
 
-If you would like to share a git conflict, please ONLY share code that is publicly available and free to copy into my unit tests.
+*Note: This issue will be public, please do not attach any code to this issue that is not publicly available.*
 
-- [ ] The attached code is publicly available and can be used in unit tests.
+clj-mergetool version: `$(clj-mergetool version)`
 
-Github/gitlab/bitbucket url:
+# Steps to reproduce:
 
-- [ ] I have attached the **three** unmerged source files from the git index
-- [ ] I have also attached the manually merged file with the expected results
+*The REPOSITORY_URL must be public.*
 
-# Pull unmerged source files from git index
-
-Please note that this tool does a 3-way diff merge which also requires three source files: ancestor, current, other.
-
-If diff3 configuration option was enabled prior to merge you can attach the conflict file instead (see next section).
-
+### Given the following:
 ```
-git show :1:filename.clj > filename.base.clj
-git show :2:filename.clj > filename.current.clj
-git show :3:filename.clj > filename.other.clj
+REPOSITORY_URL=
+FEATURE_BRANCH_HASH=
+MAIN_BRANCH_HASH=
 ```
 
-Resolve conflicts in original file and then zip or tar these files to attach to the issue.
-
+### These steps:
 ```
-tar cJvf filename.tar.xz filename*
-```
-
-# Conflict file
-
-The conflict file is not needed if the original three source files are attached. However if you had diff3 enabled prior to merge the three source versions can be extracted from the conflict file itself. Unfortunatly, diff3 is NOT enabled by default but can be enabled using git config as follows:
-
-```
-git config --global merge.conflictStyle diff3
+git clone $REPOSITORY_URL
+git checkout $FEATURE_BRANCH_HASH -b right
+git checkout $MAIN_BRANCH_HASH -b left
+git merge right
+clj-mergetool remerge clj-mergetool remerge src/clj/fluree/db/ledger/json_ld.cljc
 ```
 
-When enabled you will see an additional section bookmarked with `|||||||` - `=======`. eg:
+# Produce this result
 
-```
-||||||| add178e
-        org.clojure/core.async {:mvn/version "1.3.610"}}}
-=======
-```
+...
 
-If the conflict file does not include `|||||||` then you will need to pull the three source files from the index as documented in previous section or abort and retry merge to regenerate the conflict file.
+# The result I expect is
 
-Thanks!
+...
