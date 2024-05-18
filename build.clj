@@ -26,7 +26,9 @@
 
 
 (defn can-build-native-image? []
-  (= 0 (:exit (sh "which" "native-image"))))
+  (let [os-windows? (.startsWith (System/getProperty "os.name") "Windows")
+        proc (if os-windows? (sh "where" "native-image.cmd") (sh "which" "native-image"))]
+    (= 0 (:exit proc))))
 
 (comment
   (:out (sh {:out :string} "which" "native-image"))
