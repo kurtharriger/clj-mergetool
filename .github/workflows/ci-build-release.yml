@@ -36,26 +36,11 @@ jobs:
       - name: Run CI Task
         run: clojure -T:build ci
 
-      - name: Archive build artifact for Linux
-        if: runner.os == 'Linux'
+      - name: Archive build artifact
         uses: actions/upload-artifact@v2
         with:
-          name: clj-mergetool-linux
-          path: target/clj-mergetool
-
-      - name: Archive build artifact for Windows
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v2
-        with:
-          name: clj-mergetool-windows
-          path: target/clj-mergetool.exe
-
-      - name: Archive build artifact for macOS
-        if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v2
-        with:
-          name: clj-mergetool-macos
-          path: target/clj-mergetool
+          name: clj-mergetool-${{ matrix.os }}
+          path: target/clj-mergetool${{ matrix.os == 'windows-latest' && '.exe' || '' }}
 
   release:
     needs: build
@@ -68,20 +53,20 @@ jobs:
       - name: Download build artifacts for Linux
         uses: actions/download-artifact@v2
         with:
-          name: clj-mergetool-linux
-          path: target/clj-mergetool
+          name: clj-mergetool-ubuntu
+          path: target/clj-mergetool-linux
 
       - name: Download build artifacts for Windows
         uses: actions/download-artifact@v2
         with:
           name: clj-mergetool-windows
-          path: target/clj-mergetool.exe
+          path: target/clj-mergetool-windows.exe
 
       - name: Download build artifacts for macOS
         uses: actions/download-artifact@v2
         with:
           name: clj-mergetool-macos
-          path: target/clj-mergetool
+          path: target/clj-mergetool-macos
 
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
