@@ -99,13 +99,23 @@
       (patch)
       (output)))
 
+(defn unmerged-files-from-ls-files [stdout]
+  ;; files deleted by us or them are still reported as unmerged
+  ;; only keep unmerged files with all 3 versions
+  ;; see test-unmerged-files-from-ls-files
+  (->> (frequencies
+        (for [line (string/split-lines stdout)]
+          (last (string/split line #"\s+" 4))))
+       (filter #(= 3 (val %)))
+       (map first)
+       (not-empty)))
+
 (defn unmerged-files [{dir :dir}]
-  (when-let
-   [out (-> (sh {:dir dir} "git diff --name-only --diff-filter=U")
-            (check)
-            (:out)
-            (not-empty))]
-    (string/split-lines out)))
+  (-> (sh {:dir dir} "git ls-files -u")
+      (check)
+      (:out)
+      (not-empty)
+      (unmerged-files-from-ls-files)))
 
 (defn load-from-index [{dir :dir :as opts} & files]
   (let [parse (fn [file n]
@@ -162,8 +172,10 @@
 
 (comment
  ;;
-  (load-from-index {:dir "local/ex"})
-  (remerge {:dir "local/ex" :files ["base.clj"]})
+  (load-from-index {:dir "local/db"})
+
+  (remerge {:dir "local/db" })
+  (remerge {:dir "local/db" :files ["local/db/src/clj/fluree/db/conn/ipfs.cljc"]})
 
   ;;
   )

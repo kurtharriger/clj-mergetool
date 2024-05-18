@@ -2,7 +2,7 @@
 
 ## 0.5.0 - [Unreleased]
 
-...
+Fix unmerged deleted files
 
 ## [0.4.3] - 2024-04-14
 
