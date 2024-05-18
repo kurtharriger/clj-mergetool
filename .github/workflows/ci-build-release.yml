@@ -3,7 +3,7 @@ name: CI Build and Release
 on:
   push:
     branches:
-      - main
+      - test-ci-pipeline
   workflow_dispatch:
 
 jobs:
