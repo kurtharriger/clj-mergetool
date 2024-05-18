@@ -205,11 +205,14 @@
           (m/match edit
             [?path ?replace-or-add ?value]
             (let [node (add-leading-metadata (z/node (focus rzip ?path)))
+                  ;; todo: causing exception, commented out for now
                    ;; if node is a map value than also grab the map key
-                  node (if (= (z/tag (focus rzip (butlast ?path))) :map)
-                         (vary-meta node assoc :key-node (add-leading-metadata
-                                                          (z/node (z/left (focus rzip ?path)))))
-                         node)]
+                  ;; node (if (= (z/tag (focus rzip (butlast ?path))) :map)
+                  ;;        (vary-meta node assoc :key-node (add-leading-metadata
+                  ;;                                         (z/node (z/left (focus rzip ?path)))))
+                  ;;        node)
+
+                  ]
               [?path ?replace-or-add node])
             ?other ?other))
         (vec)
