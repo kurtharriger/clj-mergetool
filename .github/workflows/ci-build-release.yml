@@ -3,39 +3,58 @@ name: CI Build and Release
 on:
   push:
     branches:
+      - main
       - test-ci-pipeline
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
+    runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          graalvm-version: '21.1.0' # Use the appropriate version you need
-          java-version: '11' # Adjust the Java version as needed
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
 
-      - name: Set up Clojure
-        uses: DeLaGuardo/setup-clojure@v1
+      - name: Install Clojure CLI and Babashka
+        uses: DeLaGuardo/setup-clojure@12.5
         with:
-          tools-deps-version: '1.10.3.933' # Use the appropriate version you need
+          cli: 'latest'
+          bb: 'latest'
 
       - name: Run CI Task
         run: clj -T:build ci
 
-      - name: Archive build artifact
+      - name: Archive build artifact for Linux
+        if: runner.os == 'Linux'
         uses: actions/upload-artifact@v2
         with:
-          name: clj-mergetool-${{ matrix.os }}
+          name: clj-mergetool-linux
+          path: target/clj-mergetool
+
+      - name: Archive build artifact for Windows
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v2
+        with:
+          name: clj-mergetool-windows
+          path: target/clj-mergetool.exe
+
+      - name: Archive build artifact for macOS
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v2
+        with:
+          name: clj-mergetool-macos
           path: target/clj-mergetool
 
   release:
@@ -44,24 +63,39 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Download build artifacts
+      - name: Download build artifacts for Linux
         uses: actions/download-artifact@v2
         with:
-          name: clj-mergetool-${{ matrix.os }}
+          name: clj-mergetool-linux
+          path: target/clj-mergetool
+
+      - name: Download build artifacts for Windows
+        uses: actions/download-artifact@v2
+        with:
+          name: clj-mergetool-windows
+          path: target/clj-mergetool.exe
+
+      - name: Download build artifacts for macOS
+        uses: actions/download-artifact@v2
+        with:
+          name: clj-mergetool-macos
           path: target/clj-mergetool
 
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          graalvm-version: '21.1.0'
-          java-version: '11'
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
 
-      - name: Set up Clojure
-        uses: DeLaGuardo/setup-clojure@v1
+      - name: Install Clojure CLI and Babashka
+        uses: DeLaGuardo/setup-clojure@12.5
         with:
-          tools-deps-version: '1.10.3.933'
+          cli: 'latest'
+          bb: 'latest'
 
       - name: Run Release Version Task
         run: clj -T:build release-version
@@ -76,8 +110,8 @@ jobs:
       #   uses: softprops/action-gh-release@v1
       #   with:
       #     files: |
-      #       target/clj-mergetool-ubuntu-latest
-      #       target/clj-mergetool-windows-latest.exe
-      #       target/clj-mergetool-macos-latest
+      #       target/clj-mergetool-linux
+      #       target/clj-mergetool-windows.exe
+      #       target/clj-mergetool-macos
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
