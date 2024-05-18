@@ -2,7 +2,10 @@
 
 ## 0.5.0 - [Unreleased]
 
-Fix unmerged deleted files
+Fix [#2](https://github.com/kurtharriger/clj-mergetool/issues/2) error querying git index where unmerged file is deleted
+
+Revert change in 0.3.0 causing NullPointerException
+
 
 ## [0.4.3] - 2024-04-14
 
