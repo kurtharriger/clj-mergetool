@@ -1,0 +1,82 @@
+name: CI Build and Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          graalvm-version: '21.1.0' # Use the appropriate version you need
+          java-version: '11' # Adjust the Java version as needed
+
+      - name: Set up Clojure
+        uses: DeLaGuardo/setup-clojure@v1
+        with:
+          tools-deps-version: '1.10.3.933' # Use the appropriate version you need
+
+      - name: Run CI Task
+        run: clj -T:build ci
+
+      - name: Archive build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: clj-mergetool-${{ matrix.os }}
+          path: target/clj-mergetool
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: clj-mergetool-${{ matrix.os }}
+          path: target/clj-mergetool
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          graalvm-version: '21.1.0'
+          java-version: '11'
+
+      - name: Set up Clojure
+        uses: DeLaGuardo/setup-clojure@v1
+        with:
+          tools-deps-version: '1.10.3.933'
+
+      - name: Run Release Version Task
+        run: clj -T:build release-version
+
+      # - name: Push changes
+      #   run: |
+      #     git config --global user.name 'github-actions[bot]'
+      #     git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      #     git push origin main
+
+      # - name: Create Release
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     files: |
+      #       target/clj-mergetool-ubuntu-latest
+      #       target/clj-mergetool-windows-latest.exe
+      #       target/clj-mergetool-macos-latest
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
