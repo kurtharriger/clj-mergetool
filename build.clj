@@ -167,5 +167,4 @@
 
 (defn ci "Run the CI pipeline of tests (and build the uberjar)." [opts]
   (test opts)
-  (release-version opts)
   (build opts))
