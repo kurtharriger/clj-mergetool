@@ -35,11 +35,14 @@ jobs:
       - name: Run Release Version Task
         run: clojure -T:build release-version
 
+      - name: Zip code
+        run: zip -r updated-code.zip .
+
       - name: Upload updated code
         uses: actions/upload-artifact@v2
         with:
           name: updated-code
-          path: .
+          path: updated-code.zip
 
       - name: Upload release notes
         uses: actions/upload-artifact@v2
@@ -62,8 +65,8 @@ jobs:
         with:
           name: updated-code
 
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Unzip code
+        run: unzip updated-code.zip
 
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
@@ -94,9 +97,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Download build artifacts for Linux amd64
         uses: actions/download-artifact@v2
         with:
@@ -155,18 +155,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   push-changes:
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     needs: release
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Download updated code
         uses: actions/download-artifact@v2
         with:
           name: updated-code
+
+      - name: Unzip code
+        run: unzip updated-code.zip
 
       - name: Push changes
         if: github.ref == 'refs/heads/main'
