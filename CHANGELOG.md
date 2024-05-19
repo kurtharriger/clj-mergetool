@@ -1,8 +1,8 @@
 # Change Log
 
-## 0.7.0 - [Unreleased]
+## 0.6.1 - [Unreleased]
 
-...
+Fix release permission
 
 ## [0.6.0] - 2024-05-19
 
