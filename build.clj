@@ -115,7 +115,8 @@
     (spit changelog-path updated-changelog)
     (shell "git" "add" "resources/VERSION" "CHANGELOG.md")
     (shell "git" "commit" "-m" (str "Release " release-version "\n\n" changes))
-    (shell "git" "tag" release-version))
+    (shell "git" "tag" release-version)
+    (spit "RELEASE_NOTES.md" changes))
   nil)
 
 (comment
