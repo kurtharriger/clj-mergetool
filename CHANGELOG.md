@@ -1,6 +1,10 @@
 # Change Log
 
-## 0.6.1 - [Unreleased]
+## 0.7.0 - [Unreleased]
+
+...
+
+## [0.6.1] - 2024-05-19
 
 Fix release permission
 
@@ -63,7 +67,8 @@ Initial release
 
 ---
 
-[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.6.0...HEAD
+[Unreleased]: https://github.com/kurtharriger/clj-mergetool/compare/0.6.1...HEAD
+[0.6.1]: https://github.com/kurtharriger/clj-mergetool/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/kurtharriger/clj-mergetool/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.3...0.5.0
 [0.4.3]: https://github.com/kurtharriger/clj-mergetool/compare/0.4.2...0.4.3
