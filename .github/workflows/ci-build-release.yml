@@ -8,6 +8,7 @@ on:
 
 jobs:
   release-version:
+    if:  github.workflow != 'CI Build and Release'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -34,14 +35,21 @@ jobs:
       - name: Run Release Version Task
         run: clojure -T:build release-version
 
-      - name: Zip code
-        run: zip -r updated-code.zip .
+      # - name: Zip code
+      #   run: zip -r updated-code.zip .
+
+      # - name: Upload updated code
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: updated-code
+      #     path: updated-code.zip
+      #     if-no-files-found: error
 
       - name: Upload updated code
         uses: actions/upload-artifact@v4
         with:
           name: updated-code
-          path: updated-code.zip
+          path: .
           if-no-files-found: error
 
       - name: Upload release notes
@@ -66,8 +74,8 @@ jobs:
         with:
           name: updated-code
 
-      - name: Unzip code
-        run: unzip updated-code.zip
+      # - name: Unzip code
+      #   run: unzip updated-code.zip
 
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
@@ -157,7 +165,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   push-changes:
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     needs: release
     runs-on: ubuntu-latest
 
@@ -167,8 +175,8 @@ jobs:
         with:
           name: updated-code
 
-      - name: Unzip code
-        run: unzip updated-code.zip
+      # - name: Unzip code
+      #   run: unzip updated-code.zip
 
       - name: Push changes
         if: github.ref == 'refs/heads/main'
