@@ -39,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: clj-mergetool-${{ matrix.os }}-${{ matrix.arch }}
-          path: target/clj-mergetool
+          path: target/clj-mergetool${{ matrix.os == 'windows-latest' && '.exe' || '' }}
           if-no-files-found: error
 
   release:
