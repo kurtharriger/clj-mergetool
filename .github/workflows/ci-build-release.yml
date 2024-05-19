@@ -111,18 +111,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Configure Git
-        uses: actions/checkout@v4
-
       - name: Download updated code
         uses: actions/download-artifact@v4
         with:
           name: updated-code
-          path: updated-code
 
       - name: Push changes
         run: |
-          cd updated-code
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
           git push origin main --tags
 
   release:
