@@ -2,7 +2,7 @@
 
 ## 0.6.0 - [Unreleased]
 
-...
+Implement CICD pipeline
 
 ## [0.5.0] - 2024-05-18
 

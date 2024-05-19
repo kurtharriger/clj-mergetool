@@ -26,7 +26,9 @@
 
 
 (defn can-build-native-image? []
-  (= 0 (:exit (sh "which" "native-image"))))
+  (let [os-windows? (.startsWith (System/getProperty "os.name") "Windows")
+        proc (if os-windows? (sh "where" "native-image.cmd") (sh "which" "native-image"))]
+    (= 0 (:exit proc))))
 
 (comment
   (:out (sh {:out :string} "which" "native-image"))
@@ -113,7 +115,8 @@
     (spit changelog-path updated-changelog)
     (shell "git" "add" "resources/VERSION" "CHANGELOG.md")
     (shell "git" "commit" "-m" (str "Release " release-version "\n\n" changes))
-    (shell "git" "tag" release-version))
+    (shell "git" "tag" release-version)
+    (spit "RELEASE_NOTES.md" changes))
   nil)
 
 (comment
@@ -167,5 +170,4 @@
 
 (defn ci "Run the CI pipeline of tests (and build the uberjar)." [opts]
   (test opts)
-  (release-version opts)
   (build opts))
