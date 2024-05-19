@@ -3,11 +3,14 @@ name: CI Build and Release
 on:
   push:
     branches:
-      - main
-      - test-ci-pipeline
+      - '**'
+  pull_request:
+    branches:
+      - '**'
 
 jobs:
   check-last-commit-author:
+    if: ${{ github.event.repository.fork == false }}
     runs-on: ubuntu-latest
     outputs:
       author: ${{ steps.get_author.outputs.author }}
@@ -48,16 +51,6 @@ jobs:
       - name: Run Release Version Task
         run: clojure -T:build release-version
 
-      # - name: Zip code
-      #   run: zip -r updated-code.zip .
-
-      # - name: Upload updated code
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: updated-code
-      #     path: updated-code.zip
-      #     if-no-files-found: error
-
       - name: Upload updated code
         uses: actions/upload-artifact@v4
         with:
@@ -87,9 +80,6 @@ jobs:
         with:
           name: updated-code
 
-      # - name: Unzip code
-      #   run: unzip updated-code.zip
-
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
@@ -115,7 +105,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
 
@@ -178,7 +168,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   push-changes:
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     needs: release
     runs-on: ubuntu-latest
 
@@ -187,9 +177,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: updated-code
-
-      # - name: Unzip code
-      #   run: unzip updated-code.zip
 
       - name: Push changes
         if: github.ref == 'refs/heads/main'
