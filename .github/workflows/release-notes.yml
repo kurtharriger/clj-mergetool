@@ -1,0 +1,43 @@
+name: Generate Release Commit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Clojure CLI and Babashka
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          cli: 'latest'
+          bb: 'latest'
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'clj-mergetool Release Bot'
+          git config --global user.email 'kurtharriger@gmail.com'
+
+      - name: Run Release Version Task
+        run: clojure -T:build release-version
+
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git checkout -b release-notes-branch
+          git add .
+          git commit -m "Generate release notes"
+          git push origin release-notes-branch
+          gh pr create --title "Release Notes Update" --body "This PR contains the updated release notes" --base main --head release-notes-branch
