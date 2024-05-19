@@ -117,8 +117,10 @@ jobs:
           name: updated-code
 
       - name: Push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git remote set-url origin https://${{ github.token }}@github.com/${{ github.repository }}.git
+          git remote set-url origin https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git push origin main --tags
 
   release:
