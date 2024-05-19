@@ -85,10 +85,11 @@ jobs:
       - name: Archive build artifact
         uses: actions/upload-artifact@v2
         with:
-          name: clj-mergetool-${{ matrix.os }}-latest-${{ matrix.arch }}
+          name: clj-mergetool-${{ matrix.os }}-${{ matrix.arch }}
           path: target/clj-mergetool${{ matrix.os == 'windows-latest' && '.exe' || '' }}
 
   release:
+    # if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
 
@@ -139,6 +140,7 @@ jobs:
           path: RELEASE_NOTES.md
 
       - name: Create Release
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
         with:
           body_path: RELEASE_NOTES.md
@@ -153,7 +155,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   push-changes:
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     needs: release
     runs-on: ubuntu-latest
 
@@ -167,5 +169,6 @@ jobs:
           name: updated-code
 
       - name: Push changes
+        if: github.ref == 'refs/heads/main'
         run: |
           git push origin main
