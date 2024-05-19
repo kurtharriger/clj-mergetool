@@ -114,6 +114,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: updated-code
+      - name: Configure Git to use GitHub token
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
 
       - name: Push changes
         run: |
