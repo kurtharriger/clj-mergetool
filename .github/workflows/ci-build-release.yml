@@ -111,6 +111,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Configure Git
+        uses: actions/checkout@v4
+
       - name: Download updated code
         uses: actions/download-artifact@v4
         with:
