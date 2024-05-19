@@ -7,8 +7,21 @@ on:
       - test-ci-pipeline
 
 jobs:
+  check-last-commit-author:
+    runs-on: ubuntu-latest
+    outputs:
+      author: ${{ steps.get_author.outputs.author }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get last commit author
+        id: get_author
+        run: echo "author=$(git log -1 --pretty=format:'%an')" >> $GITHUB_OUTPUT
+
   release-version:
-    if:  github.workflow != 'CI Build and Release'
+    needs: check-last-commit-author
+    if: needs.check-last-commit-author.outputs.author != 'clj-mergetool Release Bot'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
