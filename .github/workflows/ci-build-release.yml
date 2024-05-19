@@ -104,9 +104,24 @@ jobs:
           path: target/clj-mergetool${{ matrix.os == 'windows-latest' && '.exe' || '' }}
           if-no-files-found: error
 
-  release:
+  push-changes:
     if: github.ref == 'refs/heads/main'
     needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download updated code
+        uses: actions/download-artifact@v4
+        with:
+          name: updated-code
+
+      - name: Push changes
+        run: |
+          git push origin main --tags
+
+  release:
+    if: github.ref == 'refs/heads/main'
+    needs: push-changes
     runs-on: ubuntu-latest
 
     steps:
@@ -153,7 +168,6 @@ jobs:
           path: RELEASE_NOTES.md
 
       - name: Create Release
-        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
         with:
           body_path: RELEASE_NOTES.md
@@ -166,19 +180,3 @@ jobs:
             target/clj-mergetool-macos-arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  push-changes:
-    if: github.ref == 'refs/heads/main'
-    needs: release
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download updated code
-        uses: actions/download-artifact@v4
-        with:
-          name: updated-code
-
-      - name: Push changes
-        if: github.ref == 'refs/heads/main'
-        run: |
-          git push origin main
