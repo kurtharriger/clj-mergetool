@@ -111,6 +111,10 @@
         updated-changelog (-> changelog
                               (string/replace unreleased-header (str next-version-header "\n\n...\n\n" release-header))
                               (string/replace unreleased-link (str next-unreleased-link "\n" release-link)))]
+    (when (= "..." changes)
+      (binding [*out* *err*]
+        (println "Change log not updated")
+        (System/exit 1)))
     (spit "resources/VERSION" release-version)
     (spit changelog-path updated-changelog)
     (shell "git" "add" "resources/VERSION" "CHANGELOG.md")

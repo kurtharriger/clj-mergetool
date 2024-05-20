@@ -37,7 +37,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git checkout -b release-notes-branch
           clojure -T:build release-version
-          git push origin release-notes-branch
-          gh pr create --title "Release Notes Update" --body "This PR contains the updated release notes" --base main --head release-notes-branch
+          VERSION=$(cat resources/VERSION)
+          NOTES=$(cat RELEASE_NOTES.md)
+          git push origin HEAD:release-$VERSION
+          gh pr create --title "Release $VERSION" --body "$NOTES" --base main --head release-$VERSION
