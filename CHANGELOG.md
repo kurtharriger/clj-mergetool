@@ -2,7 +2,7 @@
 
 ## 0.7.0 - [Unreleased]
 
-...
+Attach artifacts to release
 
 ## [0.6.1] - 2024-05-19
 
